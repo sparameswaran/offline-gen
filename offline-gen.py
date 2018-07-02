@@ -126,7 +126,7 @@ def handle_docker_image(resource, blobstore_upload_pipeline, offline_pipeline):
 	output_resource = { 'name' : 'output_' + resource['name'] }
 	output_resource['type'] = 's3'
 	output_resource['source'] = copy.copy(default_bucket_config)
-	output_resource['source']['regexp'] = '%s/%s' % ( 'resources', resource['name'] + '-(.*).tgz')
+	output_resource['source']['regexp'] = '%s/docker/%s' % ( 'resources', resource['name'] + '-(.*).tgz')
 
 	blobstore_upload_pipeline['resources'].append(input_resource)
 	blobstore_upload_pipeline['resources'].append(output_resource)
@@ -211,7 +211,7 @@ def handle_pivnet_non_tile_resource(resource, blobstore_upload_pipeline, offline
 	#print 'Resource is {}'.format(resource)
 	#print 'End of file is : {}'.format(end_file)
 
-	output_resource['source']['regexp'] = '%s/%s-(.*)' % ( 'resources', end_file)
+	output_resource['source']['regexp'] = '%s/pivnet-non-tile/%s-(.*)' % ( 'resources', end_file)
 	final_file_path = '%s/%s-*' % ( output_resource['name'], resource['name'])
 
 	offline_resource = copy.copy(output_resource)
@@ -289,12 +289,11 @@ def handle_pivnet_tile_resource(resource, blobstore_upload_pipeline, offline_pip
 	# final_file_path = output_resource['name'] + '/%s-*.pivotal' % ( end_file)
 
 	end_file = resource['name']
-	output_resource['source']['regexp'] = '%s/%s-(.*)' % ( 'resources', end_file)
+	output_resource['source']['regexp'] = '%s/pivnet-tile/%s-(.*)' % ( 'resources', end_file)
 	final_file_path = '%s/%s-*' % ( output_resource['name'], resource['name'])
 
-	stemcell_file = 'stemcell-' +  resource['name']
-	output_stemcell_resource['source']['regexp'] = '%s/%s-(.*)' % ( 'resources', stemcell_file)
-	final_stemcell_file_path = '%s/%s-*' % (output_stemcell_resource['name'], stemcell_file)
+	output_stemcell_resource['source']['regexp'] = '%s/pivnet-stemcell/bosh-(.*).tgz' % ( 'resources')
+	final_stemcell_file_path = '%s/bosh-*.tgz' % (output_stemcell_resource['name'])
 
 	offline_resource = copy.copy(output_resource)
 	offline_resource['name'] = resource['name']
@@ -340,11 +339,10 @@ else \
   echo "Stemcell file not found!";  \
   exit 1; \
 fi; \
-	mv %s/* %s/; \
+	mv $TILE_FILE_PATH %s/; \
 	mv $SC_FILE_PATH %s/; \
 	ls -l %s/ %s/') \
 	% ( resource['name'],
-		input_resource['name'],
 		input_resource['name'],
 		output_resource['name'],
 		output_stemcell_resource['name'],
@@ -370,10 +368,12 @@ def handle_s3_resource(resource, blobstore_upload_pipeline, offline_pipeline):
 
 	# If the source and destination are the same s3 buckets/access keys,
 	# then just simply copy the resource into offline pipeline
-	if resource['source']['endpoint'] == default_bucket_config['endpoint']
-	  and resource['source']['bucket'] == default_bucket_config['bucket']
-	  resource['source']['access_key_id'] == default_bucket_config['access_key_id']
-	  and resource['source']['secret_access_key'] == default_bucket_config['secret_access_key']:
+	if resource['source']['endpoint'] == default_bucket_config['endpoint'] \
+	  and resource['source']['bucket'] == default_bucket_config['bucket'] \
+	  and resource['source']['access_key_id'] == \
+	  default_bucket_config['access_key_id'] \
+	  and resource['source']['secret_access_key'] == \
+	  default_bucket_config['secret_access_key']:
 		offline_resource['name'] = resource['name']
 		offline_pipeline['resources'].append(offline_resource)
 		return
@@ -402,7 +402,7 @@ def handle_s3_resource(resource, blobstore_upload_pipeline, offline_pipeline):
 
 	tokens = end_file.split('/')
 	end_file = tokens[len(tokens) - 1]
-	output_resource['source']['regexp'] = '%s/%s-(.*)' % ( 'resources', end_file)
+	output_resource['source']['regexp'] = '%s/s3/%s-(.*)' % ( 'resources', end_file)
 	final_file_path = output_resource['name'] + '/' + end_file + '-' + tag
 
 	offline_resource = copy.copy(output_resource)
@@ -475,7 +475,7 @@ def handle_git_resource(resource, blobstore_upload_pipeline, offline_pipeline):
 
 	tokens = end_file.split('/')
 	end_file = tokens[len(tokens) - 1]
-	output_resource['source']['regexp'] = '%s/%s-(.*).tgz' % ( 'resources', resource['name'])
+	output_resource['source']['regexp'] = '%s/git/%s-(.*).tgz' % ( 'resources', resource['name'])
 	final_file_path = output_resource['name'] + '/' + resource['name'] + '-' + tag + '.tgz'
 
 	# end_file = resource['name']
@@ -555,7 +555,7 @@ def handle_default_resource(resource, blobstore_upload_pipeline, offline_pipelin
 
 	tokens = end_file.split('/')
 	end_file = tokens[len(tokens) - 1]
-	output_resource['source']['regexp'] = '%s/%s-(.*)' % ( 'resources', end_file)
+	output_resource['source']['regexp'] = '%s/default/%s-(.*)' % ( 'resources', end_file)
 	final_file_path = output_resource['name'] + '/' + end_file + '-' + tag
 
 	offline_resource = copy.copy(output_resource)
