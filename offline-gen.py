@@ -10,11 +10,19 @@ repo = '.'
 pipeline = None
 params = None
 default_bucket_config =  {}
+
 CONFIG_FILE = 'input.yml'
 DEFAULT_VERSION = '1.0'
+
 input_config_file = None
+
 src_pipeline = None
 
+upload_individual_group_job = None
+parallel_upload_job_plan_getter_aggregate = None
+parallel_upload_job_plan_copy_job_aggregate = None
+parallel_upload_job_plan_putter_aggregate = None
+parallel_upload_job_plan_stemcell_putter_aggregate = None
 
 def init():
 	parser = argparse.ArgumentParser()
@@ -58,14 +66,18 @@ def add_docker_image_as_resource(pipeline):
 	pipeline['resources'].append(new_docker_resource)
 
 def handle_pipeline():
-	global src_pipeline
+	global src_pipeline, upload_individual_group_job, \
+		parallel_upload_job_plan_getter_aggregate, \
+		parallel_upload_job_plan_copy_job_aggregate, \
+		parallel_upload_job_plan_putter_aggregate, \
+		parallel_upload_job_plan_stemcell_putter_aggregate
+
 	print('Got repo: {} and pipeline: {}'.format(repo, pipeline))
 	src_pipeline = read_config(repo + '/' + pipeline )
 	#print 'Got src pipeline: {}'.format(src_pipeline)
 
 	# REMOVE ME - SABHA
 	add_docker_image_as_resource(src_pipeline)
-
 
 	src_pipeline['nsx_t_gen_params'] = None
 	blobstore_upload_pipeline = copy.copy(src_pipeline)
@@ -79,17 +91,32 @@ def handle_pipeline():
 		blobstore_upload_pipeline['groups'] = [ ]
 		blobstore_upload_pipeline['groups'].append({ 'name' : 'parallel-kickoff' })
 		blobstore_upload_pipeline['groups'][0]['jobs'] = [ 'parallel-kickoff' ]
+		upload_parallel_group_job = blobstore_upload_pipeline['groups'][0]['jobs']
+
 
 		blobstore_upload_pipeline['groups'].append( {'name' : 'individual-kickoff' })
 		blobstore_upload_pipeline['groups'][1]['jobs'] = [ ]
+		upload_individual_group_job = blobstore_upload_pipeline['groups'][1]['jobs']
 
 		blobstore_upload_pipeline['jobs'] = [ { 'name' : 'parallel-kickoff' } ]
 
-		blobstore_upload_pipeline['jobs'][0]['plan'] = []
-		blobstore_upload_pipeline['jobs'][0]['plan'].append( {'aggregate': [] })
-		blobstore_upload_pipeline['jobs'][0]['plan'].append( {'aggregate': [] })
-		blobstore_upload_pipeline['jobs'][0]['plan'].append( {'aggregate': [] })
-		blobstore_upload_pipeline['jobs'][0]['plan'].append( {'aggregate': [] })
+		upload_parallel_job = blobstore_upload_pipeline['jobs'][0]
+		upload_parallel_job['plan'] = []
+		parallel_upload_job_plan = upload_parallel_job['plan']
+
+		parallel_upload_job_plan.append( {'aggregate': [] })
+		parallel_upload_job_plan.append( {'aggregate': [] })
+		parallel_upload_job_plan.append( {'aggregate': [] })
+		parallel_upload_job_plan.append( {'aggregate': [] })
+
+		parallel_upload_job_plan_getter_aggregate = parallel_upload_job_plan[0]['aggregate']
+
+		parallel_upload_job_plan_copy_job_aggregate = parallel_upload_job_plan[1]['aggregate']
+
+		parallel_upload_job_plan_putter_aggregate = parallel_upload_job_plan[2]['aggregate']
+
+		parallel_upload_job_plan_stemcell_putter_aggregate = parallel_upload_job_plan[3]['aggregate']
+
 		handle_resources(src_pipeline, blobstore_upload_pipeline, offline_pipeline)
 		#print 'Done handling resources: {}'.format(blobstore_upload_pipeline)
 
@@ -141,7 +168,7 @@ def clone_resource(resource, blobstore_upload_pipeline, offline_pipeline):
 
 	offline_resource = copy.copy(output_resource)
 	offline_resource['name'] = resource['name']
-	
+
 	offline_pipeline['resources'].append(offline_resource)
 	blobstore_upload_pipeline['resources'].append(input_resource)
 	blobstore_upload_pipeline['resources'].append(output_resource)
@@ -208,11 +235,11 @@ ls -l ../%s/') \
 
 	blobstore_upload_pipeline['jobs'].append(copy_job)
 
-	blobstore_upload_pipeline['groups'][1]['jobs'].append(copy_job['name'])
+	upload_individual_group_job.append(copy_job['name'])
 
-	blobstore_upload_pipeline['jobs'][0]['plan'][0]['aggregate'].append({ 'get': input_resource['name'], 'params': {'rootfs': True} })
-	blobstore_upload_pipeline['jobs'][0]['plan'][1]['aggregate'].append(copy_job['plan'][1])
-	blobstore_upload_pipeline['jobs'][0]['plan'][2]['aggregate'].append({ 'put' : output_resource['name'] , 'params': { 'file' : final_file_path }  })
+	parallel_upload_job_plan_getter_aggregate.append({ 'get': input_resource['name'], 'params': {'rootfs': True} })
+	parallel_upload_job_plan_copy_job_aggregate.append(copy_job['plan'][1])
+	parallel_upload_job_plan_putter_aggregate.append({ 'put' : output_resource['name'] , 'params': { 'file' : final_file_path }  })
 
 
 	print 'End bucket endpoint: %%{}%%'.format(output_resource['source']['endpoint'])
@@ -282,11 +309,11 @@ echo "Copying %s bits"; \
 						  }
 
 	blobstore_upload_pipeline['jobs'].append(copy_job)
-	blobstore_upload_pipeline['groups'][1]['jobs'].append(copy_job['name'])
+	upload_individual_group_job.append(copy_job['name'])
 
-	blobstore_upload_pipeline['jobs'][0]['plan'][0]['aggregate'].append( { 'get' : input_resource['name'] , 'params': input_glob_param })
-	blobstore_upload_pipeline['jobs'][0]['plan'][1]['aggregate'].append(copy_job['plan'][1])
-	blobstore_upload_pipeline['jobs'][0]['plan'][2]['aggregate'].append({ 'put' : output_resource['name'] , 'params': { 'file' : final_file_path }  })
+	parallel_upload_job_plan_getter_aggregate.append( { 'get' : input_resource['name'] , 'params': input_glob_param })
+	parallel_upload_job_plan_copy_job_aggregate.append(copy_job['plan'][1])
+	parallel_upload_job_plan_putter_aggregate.append({ 'put' : output_resource['name'] , 'params': { 'file' : final_file_path }  })
 
 def handle_pivnet_tile_resource(resource, blobstore_upload_pipeline, offline_pipeline):
 
@@ -366,12 +393,12 @@ fi; \
 						  }
 
 	blobstore_upload_pipeline['jobs'].append(copy_job)
-	blobstore_upload_pipeline['groups'][1]['jobs'].append(copy_job['name'])
+	upload_individual_group_job.append(copy_job['name'])
 
-	blobstore_upload_pipeline['jobs'][0]['plan'][0]['aggregate'].append( { 'get' : input_resource['name'] , 'params': input_glob_param } )
-	blobstore_upload_pipeline['jobs'][0]['plan'][1]['aggregate'].append(copy_job['plan'][1])
-	blobstore_upload_pipeline['jobs'][0]['plan'][2]['aggregate'].append({ 'put' : output_resource['name'] , 'params': { 'file' : final_file_path }  })
-	blobstore_upload_pipeline['jobs'][0]['plan'][3]['aggregate'].append({ 'put' : output_stemcell_resource['name'] , 'params': { 'file' : final_stemcell_file_path }  })
+	parallel_upload_job_plan_getter_aggregate.append( { 'get' : input_resource['name'] , 'params': input_glob_param } )
+	parallel_upload_job_plan_copy_job_aggregate.append(copy_job['plan'][1])
+	parallel_upload_job_plan_putter_aggregate.append({ 'put' : output_resource['name'] , 'params': { 'file' : final_file_path }  })
+	parallel_upload_job_plan_stemcell_putter_aggregate.append({ 'put' : output_stemcell_resource['name'] , 'params': { 'file' : final_stemcell_file_path }  })
 
 def handle_s3_resource(resource, blobstore_upload_pipeline, offline_pipeline):
 	print 'Handling s3 resource'
@@ -447,11 +474,11 @@ def handle_s3_resource(resource, blobstore_upload_pipeline, offline_pipeline):
 						  }
 
 	blobstore_upload_pipeline['jobs'].append(copy_job)
-	blobstore_upload_pipeline['groups'][1]['jobs'].append(copy_job['name'])
+	upload_individual_group_job.append(copy_job['name'])
 
-	blobstore_upload_pipeline['jobs'][0]['plan'][0]['aggregate'].append({ 'get': input_resource['name'] })
-	blobstore_upload_pipeline['jobs'][0]['plan'][1]['aggregate'].append(copy_job['plan'][1])
-	blobstore_upload_pipeline['jobs'][0]['plan'][2]['aggregate'].append({ 'put' : output_resource['name'] , 'params': { 'file' : final_file_path }  })
+	parallel_upload_job_plan_getter_aggregate.append({ 'get': input_resource['name'] })
+	parallel_upload_job_plan_copy_job_aggregate.append(copy_job['plan'][1])
+	parallel_upload_job_plan_putter_aggregate.append({ 'put' : output_resource['name'] , 'params': { 'file' : final_file_path }  })
 
 def handle_git_resource(resource, blobstore_upload_pipeline, offline_pipeline):
 	print 'Handling git resource'
@@ -517,12 +544,12 @@ def handle_git_resource(resource, blobstore_upload_pipeline, offline_pipeline):
 						  }
 
 	blobstore_upload_pipeline['jobs'].append(copy_job)
-	blobstore_upload_pipeline['groups'][1]['jobs'].append(copy_job['name'])
+	upload_individual_group_job.append(copy_job['name'])
 
-	blobstore_upload_pipeline['jobs'][0]['plan'][0]['aggregate'].append({ 'get': input_resource['name'] })
-	blobstore_upload_pipeline['jobs'][0]['plan'][0]['aggregate'].append({ 'get': 'task_handler' })
-	blobstore_upload_pipeline['jobs'][0]['plan'][1]['aggregate'].append(copy_job['plan'][1])
-	blobstore_upload_pipeline['jobs'][0]['plan'][2]['aggregate'].append({ 'put' : output_resource['name'] , 'params': { 'file' : final_file_path }  })
+	parallel_upload_job_plan_getter_aggregate.append({ 'get': input_resource['name'] })
+	parallel_upload_job_plan_getter_aggregate.append({ 'get': 'task_handler' })
+	parallel_upload_job_plan_copy_job_aggregate.append(copy_job['plan'][1])
+	parallel_upload_job_plan_putter_aggregate.append({ 'put' : output_resource['name'] , 'params': { 'file' : final_file_path }  })
 
 # def handle_tasks(src_pipeline, given_git_resource, output_resource, blobstore_upload_pipeline, offline_pipeline):
 # 	for key in src_pipeline.keys():
@@ -622,11 +649,11 @@ def handle_default_resource(resource, blobstore_upload_pipeline, offline_pipelin
 						  }
 
 	blobstore_upload_pipeline['jobs'].append(copy_job)
-	blobstore_upload_pipeline['groups'][1]['jobs'].append(copy_job['name'])
+	upload_individual_group_job.append(copy_job['name'])
 
-	blobstore_upload_pipeline['jobs'][0]['plan'][0]['aggregate'].append({ 'get': input_resource['name'] })
-	blobstore_upload_pipeline['jobs'][0]['plan'][1]['aggregate'].append(copy_job['plan'][1])
-	blobstore_upload_pipeline['jobs'][0]['plan'][2]['aggregate'].append({ 'put' : output_resource['name'] , 'params': { 'file' : final_file_path }  })
+	parallel_upload_job_plan_getter_aggregate.append({ 'get': input_resource['name'] })
+	parallel_upload_job_plan_copy_job_aggregate.append(copy_job['plan'][1])
+	parallel_upload_job_plan_putter_aggregate.append({ 'put' : output_resource['name'] , 'params': { 'file' : final_file_path }  })
 
 def read_config(input_file):
 	try:
