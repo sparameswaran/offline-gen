@@ -13,6 +13,7 @@ default_bucket_config =  {}
 CONFIG_FILE = 'input.yml'
 DEFAULT_VERSION = '1.0'
 input_config_file = None
+src_pipeline = None
 
 
 def init():
@@ -43,6 +44,13 @@ def main():
 	default_bucket_config = handler_config['s3_blobstore']
 	handle_pipeline()
 
+def add_task_handler_as_resource(pipeline):
+	task_handler_resource = { 'name': 'task_handler'}
+	task_handler_resource['type'] = 's3'
+	task_handler_resource['source'] = copy.copy(default_bucket_config)
+	task_handler_resource['source']['regexp'] = '%s/handlers/%s' % ( 'resources', 'task_handler(.*)')
+	pipeline['resources'].append(task_handler_resource)
+
 def add_docker_image_as_resource(pipeline):
 	new_docker_resource = { 'name': 'test-ubuntu-docker'}
 	new_docker_resource['type'] = 'docker-image'
@@ -50,18 +58,23 @@ def add_docker_image_as_resource(pipeline):
 	pipeline['resources'].append(new_docker_resource)
 
 def handle_pipeline():
+	global src_pipeline
 	print('Got repo: {} and pipeline: {}'.format(repo, pipeline))
 	src_pipeline = read_config(repo + '/' + pipeline )
 	#print 'Got src pipeline: {}'.format(src_pipeline)
 
 	# REMOVE ME - SABHA
 	add_docker_image_as_resource(src_pipeline)
+
+
 	src_pipeline['nsx_t_gen_params'] = None
 	blobstore_upload_pipeline = copy.copy(src_pipeline)
 	offline_pipeline = copy.copy(src_pipeline)
 	try:
 		offline_pipeline['resources'] = []
 		blobstore_upload_pipeline['resources'] = []
+		add_task_handler_as_resource(blobstore_upload_pipeline)
+
 		blobstore_upload_pipeline['jobs'] = []
 		blobstore_upload_pipeline['groups'] = [ ]
 		blobstore_upload_pipeline['groups'].append({ 'name' : 'parallel-kickoff' })
@@ -71,6 +84,7 @@ def handle_pipeline():
 		blobstore_upload_pipeline['groups'][1]['jobs'] = [ ]
 
 		blobstore_upload_pipeline['jobs'] = [ { 'name' : 'parallel-kickoff' } ]
+
 		blobstore_upload_pipeline['jobs'][0]['plan'] = []
 		blobstore_upload_pipeline['jobs'][0]['plan'].append( {'aggregate': [] })
 		blobstore_upload_pipeline['jobs'][0]['plan'].append( {'aggregate': [] })
@@ -104,7 +118,7 @@ def handle_resources(src_pipeline, blobstore_upload_pipeline, offline_pipeline):
 		res_type = resource['type']
 
 		if res_type == 's3':
-			handle_s3_image(resource, blobstore_upload_pipeline, offline_pipeline)
+			handle_s3_resource(resource, blobstore_upload_pipeline, offline_pipeline)
 		elif res_type == 'git':
 			handle_git_resource(resource, blobstore_upload_pipeline, offline_pipeline)
 		elif res_type == 'docker-image':
@@ -117,26 +131,40 @@ def handle_resources(src_pipeline, blobstore_upload_pipeline, offline_pipeline):
 		else:
 			handle_default_resource(resource, blobstore_upload_pipeline, offline_pipeline)
 
-def handle_docker_image(resource, blobstore_upload_pipeline, offline_pipeline):
+def clone_resource(resource, blobstore_upload_pipeline, offline_pipeline):
 	input_resource = copy.copy(resource)
 	input_resource['name'] = 'input_' + resource['name']
-	version = resource['source']['tag']
-	print 'Handling docker image'
 
 	output_resource = { 'name' : 'output_' + resource['name'] }
 	output_resource['type'] = 's3'
 	output_resource['source'] = copy.copy(default_bucket_config)
-	output_resource['source']['regexp'] = '%s/docker/%s' % ( 'resources', resource['name'] + '-(.*).tgz')
 
+	offline_resource = copy.copy(output_resource)
+	offline_resource['name'] = resource['name']
+	
+	offline_pipeline['resources'].append(offline_resource)
 	blobstore_upload_pipeline['resources'].append(input_resource)
 	blobstore_upload_pipeline['resources'].append(output_resource)
+
+	return [ input_resource, output_resource, offline_resource]
+
+
+def handle_docker_image(resource, blobstore_upload_pipeline, offline_pipeline):
+	print 'Handling docker image'
+
+
+	cloned_resources = clone_resource(resource, blobstore_upload_pipeline, offline_pipeline)
+	input_resource = cloned_resources[0]
+	output_resource = cloned_resources[1]
+	offline_resource = cloned_resources[2]
+
+	version = resource['source']['tag']
+	output_resource['source']['regexp'] = '%s/docker/%s' % ( 'resources', resource['name'] + '-(.*).tgz')
+
 	# output_resource['source']['versioned_file']  is 'resources/test-ubuntu-docker-17.04.tgz'
 	# final_file_path is output_test-ubuntu-docker/test-ubuntu-docker-17.04.tgz
 	final_file_path = output_resource['name'] + '/' + resource['name'] + '-' + version + '.tgz'
 
-	offline_resource = copy.copy(output_resource)
-	offline_resource['name'] = resource['name']
-	offline_pipeline['resources'].append(offline_resource)
 
 	copy_job = { 'name' : ( 'copy_%s_to_blobstore' % (resource['name'])) }
 	copy_job['plan'] =  [ { 'get' : input_resource['name'], 'params' : { 'rootfs': True } },
@@ -199,13 +227,12 @@ ls -l ../%s/') \
 #     sort_by: semver
 
 def handle_pivnet_non_tile_resource(resource, blobstore_upload_pipeline, offline_pipeline):
-	input_resource = copy.copy(resource)
-	input_resource['name'] = 'input_' + resource['name']
 	print 'Handling pivnet image'
+	cloned_resources = clone_resource(resource, blobstore_upload_pipeline, offline_pipeline)
+	input_resource = cloned_resources[0]
+	output_resource = cloned_resources[1]
+	offline_resource = cloned_resources[2]
 
-	output_resource = { 'name' : 'output_' + resource['name'] }
-	output_resource['type'] = 's3'
-	output_resource['source'] = copy.copy(default_bucket_config)
 	end_file = resource['name']
 
 	#print 'Resource is {}'.format(resource)
@@ -216,10 +243,6 @@ def handle_pivnet_non_tile_resource(resource, blobstore_upload_pipeline, offline
 
 	offline_resource = copy.copy(output_resource)
 	offline_resource['name'] = resource['name']
-	offline_pipeline['resources'].append(offline_resource)
-
-	blobstore_upload_pipeline['resources'].append(input_resource)
-	blobstore_upload_pipeline['resources'].append(output_resource)
 
 	input_glob_param = { 'globs' : [ '*((iaas))*' ] }
 
@@ -266,27 +289,19 @@ echo "Copying %s bits"; \
 	blobstore_upload_pipeline['jobs'][0]['plan'][2]['aggregate'].append({ 'put' : output_resource['name'] , 'params': { 'file' : final_file_path }  })
 
 def handle_pivnet_tile_resource(resource, blobstore_upload_pipeline, offline_pipeline):
-	input_resource = copy.copy(resource)
-	input_resource['name'] = 'input_' + resource['name']
+
 	print 'Handling pivnet image'
 
-	output_resource = { 'name' : 'output_' + resource['name'] }
-	output_resource['type'] = 's3'
-	output_resource['source'] = copy.copy(default_bucket_config)
+	cloned_resources = clone_resource(resource, blobstore_upload_pipeline, offline_pipeline)
+	input_resource = cloned_resources[0]
+	output_resource = cloned_resources[1]
+	offline_resource = cloned_resources[2]
+
 	end_file = resource['source']['product_slug']
 
 	output_stemcell_resource = { 'name' : 'output_stemcell_' + resource['name'] }
 	output_stemcell_resource['type'] = 's3'
 	output_stemcell_resource['source'] = copy.copy(default_bucket_config)
-
-
-	#print 'Resource is {}'.format(resource)
-	#print 'End of file is : {}'.format(end_file)
-
-	# tokens = end_file.split('/')
-	# end_file = tokens[len(tokens) - 1]
-	# output_resource['source']['regexp'] = '%s/%s-(.*).pivotal' % ( 'resources', end_file)
-	# final_file_path = output_resource['name'] + '/%s-*.pivotal' % ( end_file)
 
 	end_file = resource['name']
 	output_resource['source']['regexp'] = '%s/pivnet-tile/%s-(.*)' % ( 'resources', end_file)
@@ -295,16 +310,10 @@ def handle_pivnet_tile_resource(resource, blobstore_upload_pipeline, offline_pip
 	output_stemcell_resource['source']['regexp'] = '%s/pivnet-stemcell/bosh-(.*).tgz' % ( 'resources')
 	final_stemcell_file_path = '%s/bosh-*.tgz' % (output_stemcell_resource['name'])
 
-	offline_resource = copy.copy(output_resource)
-	offline_resource['name'] = resource['name']
-	offline_pipeline['resources'].append(offline_resource)
-
 	offline_stemcell_resource = copy.copy(output_stemcell_resource)
 	offline_stemcell_resource['name'] = 'stemcell_' + resource['name']
 	offline_pipeline['resources'].append(offline_stemcell_resource)
 
-	blobstore_upload_pipeline['resources'].append(input_resource)
-	blobstore_upload_pipeline['resources'].append(output_resource)
 	blobstore_upload_pipeline['resources'].append(output_stemcell_resource)
 
 	input_glob_param = { 'globs' : [ '*.pivotal' ] }
@@ -365,27 +374,25 @@ fi; \
 	blobstore_upload_pipeline['jobs'][0]['plan'][3]['aggregate'].append({ 'put' : output_stemcell_resource['name'] , 'params': { 'file' : final_stemcell_file_path }  })
 
 def handle_s3_resource(resource, blobstore_upload_pipeline, offline_pipeline):
+	print 'Handling s3 resource'
 
 	# If the source and destination are the same s3 buckets/access keys,
 	# then just simply copy the resource into offline pipeline
+
 	if resource['source']['endpoint'] == default_bucket_config['endpoint'] \
 	  and resource['source']['bucket'] == default_bucket_config['bucket'] \
 	  and resource['source']['access_key_id'] == \
 	  default_bucket_config['access_key_id'] \
 	  and resource['source']['secret_access_key'] == \
 	  default_bucket_config['secret_access_key']:
-		offline_resource['name'] = resource['name']
+	  	offline_resource = copy.copy(resource)
 		offline_pipeline['resources'].append(offline_resource)
 		return
 
-	input_resource = copy.copy(resource)
-	input_resource['name'] = 'input_' + resource['name']
-	print 'Handling default type: ' + resource['type']
-
-	output_resource = { 'name' : 'output_' + resource['name'] }
-	output_resource['type'] = 's3'
-	output_resource['source'] = copy.copy(default_bucket_config)
-	input_source = resource['source']
+	cloned_resources = clone_resource(resource, blobstore_upload_pipeline, offline_pipeline)
+	input_resource = cloned_resources[0]
+	output_resource = cloned_resources[1]
+	offline_resource = cloned_resources[2]
 
 	end_file = input_source.get('uri') if input_source.get('uri') is not None else input_source.get('url')
 	end_file = input_source.get('filename') if end_file is None else end_file
@@ -405,12 +412,6 @@ def handle_s3_resource(resource, blobstore_upload_pipeline, offline_pipeline):
 	output_resource['source']['regexp'] = '%s/s3/%s-(.*)' % ( 'resources', end_file)
 	final_file_path = output_resource['name'] + '/' + end_file + '-' + tag
 
-	offline_resource = copy.copy(output_resource)
-	offline_resource['name'] = resource['name']
-	offline_pipeline['resources'].append(offline_resource)
-
-	blobstore_upload_pipeline['resources'].append(input_resource)
-	blobstore_upload_pipeline['resources'].append(output_resource)
 
 	copy_job = { 'name' : ( 'copy_%s_to_blobstore' % (resource['name'])) }
 	copy_job['plan'] = [
@@ -453,15 +454,13 @@ def handle_s3_resource(resource, blobstore_upload_pipeline, offline_pipeline):
 	blobstore_upload_pipeline['jobs'][0]['plan'][2]['aggregate'].append({ 'put' : output_resource['name'] , 'params': { 'file' : final_file_path }  })
 
 def handle_git_resource(resource, blobstore_upload_pipeline, offline_pipeline):
-	input_resource = copy.copy(resource)
-	input_resource['name'] = 'input_' + resource['name']
-	print 'Handling git type: ' + resource['type']
+	print 'Handling git resource'
+	cloned_resources = clone_resource(resource, blobstore_upload_pipeline, offline_pipeline)
+	input_resource = cloned_resources[0]
+	output_resource = cloned_resources[1]
+	offline_resource = cloned_resources[2]
 
-	output_resource = { 'name' : 'output_' + resource['name'] }
-	output_resource['type'] = 's3'
-	output_resource['source'] = copy.copy(default_bucket_config)
 	input_source = resource['source']
-
 	end_file = input_source.get('uri') if input_source.get('uri') is not None else input_source.get('url')
 
 	tag = input_source.get('branch') if input_source.get('branch') is not None else input_source.get('version')
@@ -482,12 +481,6 @@ def handle_git_resource(resource, blobstore_upload_pipeline, offline_pipeline):
 	# output_resource['source']['regexp'] = '%s/%s/(.*)' % ( 'resources', resource['name'])
 	# final_file_path = '%s/%s/%s' % ( output_resource['name'], resource['name'], end_file)
 
-	offline_resource = copy.copy(output_resource)
-	offline_resource['name'] = resource['name']
-	offline_pipeline['resources'].append(offline_resource)
-
-	blobstore_upload_pipeline['resources'].append(input_resource)
-	blobstore_upload_pipeline['resources'].append(output_resource)
 
 	copy_job = { 'name' : ( 'copy_%s_to_blobstore' % (resource['name'])) }
 	copy_job['plan'] = [
@@ -516,6 +509,7 @@ def handle_git_resource(resource, blobstore_upload_pipeline, offline_pipeline):
 		output_resource['name']
 	 )
 
+	# handle_tasks(src_pipeline, resource, output_resource, blobstore_upload_pipeline, offline_pipeline)
 	task_config['run']['args'].append(task_run_command)
 	copy_job['plan'][1] = {
 	                       'task' : ('prepare-%s-bit-to-export') % (resource['name']),
@@ -526,20 +520,56 @@ def handle_git_resource(resource, blobstore_upload_pipeline, offline_pipeline):
 	blobstore_upload_pipeline['groups'][1]['jobs'].append(copy_job['name'])
 
 	blobstore_upload_pipeline['jobs'][0]['plan'][0]['aggregate'].append({ 'get': input_resource['name'] })
+	blobstore_upload_pipeline['jobs'][0]['plan'][0]['aggregate'].append({ 'get': 'task_handler' })
 	blobstore_upload_pipeline['jobs'][0]['plan'][1]['aggregate'].append(copy_job['plan'][1])
 	blobstore_upload_pipeline['jobs'][0]['plan'][2]['aggregate'].append({ 'put' : output_resource['name'] , 'params': { 'file' : final_file_path }  })
 
+# def handle_tasks(src_pipeline, given_git_resource, output_resource, blobstore_upload_pipeline, offline_pipeline):
+# 	for key in src_pipeline.keys():
+# 		print 'Src pipeline key :{}'.format(key)
+# 	for job in src_pipeline['jobs']:
+# 		for plan in job['plan']:
+# 			for plan_key in plan.keys():
+# 				print '#### Plan key: {}'.format(plan_key)
+# 				if str(plan_key) == 'aggregate':
+# 					print 'Aggregate: {}'.format(plan[plan_key])
+# 					aggregate = plan[plan_key]
+# 					for entry in aggregate:
+# 						# print 'Entry within aggregate: {}'.format(entry)
+# 						# print 'Entry keys within aggregate: {}'.format(entry.keys)
+# 						for nested_entry_key in entry:
+# 							if nested_entry_key == 'task':
+# 								print '### nested_task_within_aggregate: {}'.format(entry['task'])
+# 								print('### Matching task file: {}'.format(entry['file']))
+#
+# 				elif str(plan_key) =='task':
+# 				 	print '^^^^ Found Task: {}'.format(plan[plan_key])
+# 					print('^^^^ Matching task file: {}'.format(plan['file']))
+#
+# 					# Read the task.yml
+# 					existing_task = load_yaml(%s)
+# 					docker_image_repo = existing_task['image_resource']['source']['repository']
+# 					task_script = existing_task['run']['path']
+#
+# 					new_task_defn = { 'platform' : 'linux'}
+# 					new_task_defn['inputs'] = existing_task['inputs']
+# 					new_task_defn['run'] = existing_task['run']
+# 					new_task_defn['image_resource']['source'] =  copy.copy(default_bucket_config)
+#
+# 					new_task_defn['image_resource']['source']['regexp'] = docker_image_repo + '-(.*).tgz'
+# 					new_task_defn['image_resource']['params'] = {'unpack' : True}
+#
+
 
 def handle_default_resource(resource, blobstore_upload_pipeline, offline_pipeline):
-	input_resource = copy.copy(resource)
-	input_resource['name'] = 'input_' + resource['name']
-	print 'Handling default type: ' + resource['type']
+	print 'Default handling of resource type: ' + resource['type']
 
-	output_resource = { 'name' : 'output_' + resource['name'] }
-	output_resource['type'] = 's3'
-	output_resource['source'] = copy.copy(default_bucket_config)
+	cloned_resources = clone_resource(resource, blobstore_upload_pipeline, offline_pipeline)
+	input_resource = cloned_resources[0]
+	output_resource = cloned_resources[1]
+	offline_resource = cloned_resources[2]
+
 	input_source = resource['source']
-
 	end_file = input_source.get('uri') if input_source.get('uri') is not None else input_source.get('url')
 	end_file = input_source.get('filename') if end_file is None else end_file
 
@@ -557,13 +587,6 @@ def handle_default_resource(resource, blobstore_upload_pipeline, offline_pipelin
 	end_file = tokens[len(tokens) - 1]
 	output_resource['source']['regexp'] = '%s/default/%s-(.*)' % ( 'resources', end_file)
 	final_file_path = output_resource['name'] + '/' + end_file + '-' + tag
-
-	offline_resource = copy.copy(output_resource)
-	offline_resource['name'] = resource['name']
-	offline_pipeline['resources'].append(offline_resource)
-
-	blobstore_upload_pipeline['resources'].append(input_resource)
-	blobstore_upload_pipeline['resources'].append(output_resource)
 
 	copy_job = { 'name' : ( 'copy_%s_to_blobstore' % (resource['name'])) }
 	copy_job['plan'] = [
