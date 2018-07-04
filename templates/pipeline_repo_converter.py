@@ -4,23 +4,31 @@ import copy
 import yaml, sys
 
 docker_list = []
+DOCKER_IMAGE_PATH = 'resources/docker'
 
 def main():
-    # Read the task.yml
-    DOCKER_IMAGE_PATH = 'resources/docker/'
-
-
     pipeline_repo_path = sys.argv[1]
-    tasks_list_file = sys.argv[2]
+    tasks_list_file    = sys.argv[2]
     source_config_file = sys.argv[3]
-    docker_list_file = './docker-list'
+    docker_images_file = sys.argv[4]
 
-    tasks = read_config(tasks_list_file)
-    offline_s3_resource = read_config(source_config_file)
+    if os.path.isfile(tasks_list_file):
+        tasks = read_config(tasks_list_file)['tasks']
+    else:
+        tasks = yaml.safe_load(tasks_list_file)
 
+    if os.path.isfile(source_config_file):
+        offline_s3_resource = read_config(source_config_file)['s3_blobstore']
+    else:
+        offline_s3_resource = yaml.safe_load(source_config_file)
+
+    #print 'Offline S3 resource: {}'.format(offline_s3_resource)
     for task in tasks:
         handle(task, offline_s3_resource)
 
+    print 'Docker List: {}'.format(docker_list)
+    docker_images = { 'docker_images' : docker_list }
+    write_config(docker_images, docker_images_file )
 
 def handle(task_path, offline_s3_resource):
 
@@ -29,17 +37,22 @@ def handle(task_path, offline_s3_resource):
     path_to_file= task_path[:last_index_of_path_sep+1]
     end_file = task_path[last_index_of_path_sep+1:]
 
+    print 'Handling Task: {}'.format(task_path)
     existing_task = read_config(task_path)
-    docker_image_repo = existing_task['image_resource']['source']['repository']
+    docker_image_name = existing_task['image_resource']['source']['repository']
     version = existing_task['image_resource']['source'].get('tag')
 
     if version is not None:
-        docker_image_repo += '-' + version
+        docker_image_repo = docker_image_name + '-' + version
+    else:
+        docker_image_repo = docker_image_name + '-latest'
 
-    if docker_image_repo not in docker_list:
-        docker_list.append(docker_image_repo)
+    docker_resource_path = '%s/%s-(.*).tgz' % ( DOCKER_IMAGE_PATH, docker_image_name)
+    realized_docker_resource_path = '%s/%s.tgz' % ( DOCKER_IMAGE_PATH, docker_image_repo)
 
-    docker_resource_path = '%s/%s.tgz' % ( DOCKER_IMAGE_PATH, docker_image_repo)
+    new_docker_entry = { docker_image_repo : realized_docker_resource_path }
+    if new_docker_entry not in docker_list:
+        docker_list.append( new_docker_entry)
 
     task_script = existing_task['run']['path']
 
