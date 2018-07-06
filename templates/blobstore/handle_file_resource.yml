@@ -1,0 +1,30 @@
+name: copy-{{ resource['name'] }}-file-to-blobstore
+plan:
+- get: input-{{ resource['name'] }}-{{ resource['base_type'] }}
+- config:
+    image_resource:
+      source: {repository: ubuntu}
+      type: docker-image
+    inputs:
+    - {name: input-{{ resource['name'] }}-{{ resource['base_type'] }} }
+    outputs:
+    - {name: output-{{ resource['name'] }}-{{ resource['base_type'] }} }
+    platform: linux
+    run:
+      args:
+        - -exc
+        - |
+            echo "Copying {{ resource['name'] }} bits";
+            no_of_entries=$(ls input-{{ resource['name'] }}-{{ resource['base_type'] }} | wc -l)
+            if [ $no_of_entries -ne 1 ]; then
+              cd input-{{ resource['name'] }};
+              tar cfz ../output-{{ resource['name'] }}-{{ resource['base_type'] }}/{{ resource['name'] }}-1.0 .
+              cd ..
+            else
+              mv input-{{ resource['name'] }}/* output-{{ resource['name'] }}-{{ resource['base_type'] }}/(( {{ resource['name'] }} ))-1.0
+            fi
+            ls -l output-{{ resource['name'] }}-{{ resource['base_type'] }}
+      path: /bin/bash
+  task: prepare-nsx-mgr-ova-bit-to-export
+- params: {file: output-{{ resource['name'] }}-{{ resource['base_type'] }}/(({{ resource['name'] }}))-1.0}
+  put: output-{{ resource['name'] }}-{{ resource['base_type'] }}

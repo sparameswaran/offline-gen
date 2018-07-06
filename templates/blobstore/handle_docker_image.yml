@@ -1,0 +1,33 @@
+name: copy-{{ resource['name'] }}-docker-image-to-blobstore
+plan:
+- get: input-{{ resource['name'] }}-{{ resource['base_type'] }}
+  params: {rootfs: true}
+- config:
+    image_resource:
+      source: {repository: ubuntu }
+      type: docker-image
+    inputs:
+    - {name: input-{{ resource['name'] }}-{{ resource['base_type'] }} }
+    outputs:
+    - {name: output-{{ resource['name'] }}-{{ resource['base_type'] }} }
+    platform: linux
+    run:
+      args:
+        - -exc
+        - |
+            echo "Exporting {{ resource['name'] }}-docker image"
+            mkdir export-directory;
+            cd export-directory;
+            cp ../input-{{ resource['name'] }}-{{ resource['base_type'] }}/metadata.json .;
+            mkdir rootfs && cd rootfs
+            cp ../../input-{{ resource['name'] }}-{{ resource['base_type'] }}/rootfs.tar ..
+            tar -xf ../rootfs.tar --exclude="dev/*"
+            echo "Packaging {{ resource['name'] }}-docker image"
+            tmp_version="{{ resource['tag'] }}"
+            tar -czf   "../../output-{{ resource['name'] }}-{{ resource['base_type'] }}/{{ resource['name'] }}-docker-${tmp_version}.tgz" .
+            cd ..
+            ls -l ../output-{{ resource['name'] }}-{{ resource['base_type'] }}/'
+      path: /bin/bash
+  task: prepare-{{ resource['name'] }}-docker-image-to-export
+- params: {file: output-{{ resource['name'] }}/{{ resource['name'] }}-docker-{{ resource['tag'] }}.tgz}
+  put: output-{{ resource['name'] }}-{{ resource['base_type'] }}

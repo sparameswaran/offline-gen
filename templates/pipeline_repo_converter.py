@@ -8,14 +8,14 @@ DOCKER_IMAGE_PATH = 'resources/docker'
 
 def main():
     pipeline_repo_path = sys.argv[1]
-    tasks_list_file    = sys.argv[2]
+    tasks_list_arr    = sys.argv[2]
     source_config_file = sys.argv[3]
     docker_images_file = sys.argv[4]
 
-    if os.path.isfile(tasks_list_file):
-        tasks = read_config(tasks_list_file)['tasks']
-    else:
-        tasks = yaml.safe_load(tasks_list_file)
+    # if os.path.isfile(tasks_list_file):
+    #     tasks = read_config(tasks_list_file)['tasks']
+
+    #tasks = tasks_list_arr
 
     if os.path.isfile(source_config_file):
         offline_s3_resource = read_config(source_config_file)['s3_blobstore']
@@ -23,7 +23,7 @@ def main():
         offline_s3_resource = yaml.safe_load(source_config_file)
 
     #print 'Offline S3 resource: {}'.format(offline_s3_resource)
-    for task in tasks:
+    for task in tasks_list_arr: # split(','):
         handle(task, offline_s3_resource)
 
     print 'Docker List: {}'.format(docker_list)
@@ -71,7 +71,7 @@ def handle(task_path, offline_s3_resource):
     new_task_defn['image_resource']['source']['regexp'] = docker_resource_path
     new_task_defn['image_resource']['params'] = {'unpack' : True}
 
-    write_config(new_task_defn, ('%s/mod_%s') % (path_to_file, end_file) )
+    write_config(new_task_defn, ('%s/offline_%s') % (path_to_file, end_file) )
 
 def read_config(input_file):
 	try:

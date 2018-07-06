@@ -1,0 +1,64 @@
+groups:
+- name: parallel-kickoff
+  jobs:
+  - parallel-kickoff]
+- name: individual-kickoff
+  jobs:
+  {% for resource_job in process_resource_jobs %}
+  - {{ resource_job['name'] }}
+  {% endfor %}
+
+jobs:
+- name: parallel-kickoff
+  plan:
+  - aggregate:
+    {% for resource in final_input_resources %}
+    - get: {{resource['name']}}
+    {% if resource['base_type'] == 'tile' %}
+      params: {globs: ["*.pivotal"]}
+    {% elif resource['base_type'] == 'pivnet-non-tile' %}
+      params: {globs: ["*((iaas))*"]}
+    {% endif %}
+    {% endfor %}
+
+  - aggregate:
+
+    {% for resource_job in process_resource_jobs %}
+    {% for plan in resource_job['plan'] %}
+      {% if plan.get('config') is not none %}
+    - config: {{ plan['config'] }}
+      {% endif %}
+    {% endfor %}
+    {% endfor %}
+
+  - aggregate:
+    {% for resource in final_output_resources %}
+    - {put: {{resource['name']}} }
+    {% endfor %}
+
+
+
+{% for resource_job in process_resource_jobs %}
+- {{ resource_job }}
+{% endfor %}
+
+resource_types:
+- name: pivnet
+  source: {repository: pivotalcf/pivnet-resource, tag: latest-final}
+  type: docker-image
+resources:
+  {% for resource in final_input_resources %}
+- name: {{ resource['name'] }}
+  source: {{ resource['source'] }}
+  type: {{ resource['type'] }}
+  {% endfor %}
+  {% for resource in final_output_resources %}
+- name: {{ resource['name'] }}
+  source:
+    access_key_id: ((mini_access_id))
+    bucket: ((mini_bucket))
+    endpoint: ((mini_endpoint))
+    secret_access_key: ((mini_access_key))
+    regexp: {{ resource['regexp'] }}
+  type: s3
+  {% endfor %}

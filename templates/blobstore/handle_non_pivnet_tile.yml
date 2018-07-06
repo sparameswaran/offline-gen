@@ -1,0 +1,29 @@
+name: copy-p{{ resource['name'] }}-{{ resource['base_type'] }}-to-blobstore
+plan:
+- get: input-{{ resource['name'] }}-{{ resource['base_type'] }}
+  params:
+    globs: ['*((iaas))*']
+- config:
+    image_resource:
+      source: {repository: czero/cflinuxfs2}
+      type: docker-image
+    inputs:
+    - {name: input-{{ resource['name'] }}-{{ resource['base_type'] }} }
+    params: {IAAS: ((iaas)), PIVNET_API_TOKEN: ((pivnet_token))}
+    outputs:
+    - {name: output-{{ resource['name'] }}-{{ resource['base_type'] }} }
+
+    platform: linux
+    run:
+      args:
+      - -exc
+      - |
+          echo \"Copying {{ resource['name'] }}-{{ resource['base_type'] }} bits\"
+          rm input-{{ resource['name'] }}-{{ resource['base_type'] }}/version input-{{ resource['name'] }}-{{ resource['base_type'] }}/metadata*
+          file_name=$(ls input-{{ resource['name'] }}-{{ resource['base_type'] }}/)
+          mv input-{{ resource['name'] }}-{{ resource['base_type'] }}/* output-{{ resource['name'] }}-{{ resource['base_type'] }}/{{ resource['name'] }}-{{ resource['base_type'] }}-${file_name}
+          ls -l output-{{ resource['name'] }}-{{ resource['base_type'] }}/
+      path: /bin/bash
+  task: prepare-{{ resource['name'] }}-{{ resource['base_type'] }}-bit-to-export
+- params: {file: output-{{ resource['name'] }}-{{ resource['base_type'] }}/{{ resource['name'] }}-{{ resource['base_type'] }}-*}
+  put: output-{{ resource['name'] }}-{{ resource['base_type'] }}

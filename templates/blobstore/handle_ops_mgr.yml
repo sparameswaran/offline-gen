@@ -1,0 +1,28 @@
+name: copy-pcf-ops-manager-to-blobstore
+plan:
+- get: input-pcf-ops-manager
+  params:
+    globs: ['*((iaas))*']
+- config:
+    image_resource:
+      source: {repository: czero/cflinuxfs2}
+      type: docker-image
+    inputs:
+    - {name: input-pcf-ops-manager}
+    outputs:
+    - {name: output-pcf-ops-manager}
+    params: {IAAS: ((iaas)), PIVNET_API_TOKEN: ((pivnet_token))}
+    platform: linux
+    run:
+      args:
+      - -exc
+      - |
+          echo \"Copying pcf-ops-manager bits\"
+          rm input-pcf-ops-manager/version input-pcf-ops-manager/metadata*
+          file_name=$(ls input-pcf-ops-manager/)
+          mv input-pcf-ops-manager/* output-pcf-ops-manager/pcf-ops-manager-${file_name}
+          ls -l output-pcf-ops-manager/
+      path: /bin/bash
+  task: prepare-pcf-ops-manager-bit-to-export
+- params: {file: output-pcf-ops-manager/pcf-ops-manager-*}
+  put: output-pcf-ops-manager

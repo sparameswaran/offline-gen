@@ -1,0 +1,40 @@
+name: copy-{{ resource['name'] }}-{{ resource['base_type'] }}-to-blobstore
+plan:
+- get: input-{{ resource['name'] }}-{{ resource['base_type'] }}
+  params:
+    globs: ['*.pivotal']
+- config:
+    image_resource:
+      source: {repository: czero/cflinuxfs2}
+      type: docker-image
+    inputs:
+    - {name: input-{{ resource['name'] }}-{{ resource['base_type'] }} }
+    - {name: offline-gen}
+    outputs:
+    - {name: output-{{ resource['name'] }}-{{ resource['base_type'] }} }
+    - {name: output-{{ resource['name'] }}-stemcell }
+    params: {IAAS: ((iaas)), PIVNET_API_TOKEN: ((pivnet_token))}
+    platform: linux
+    run:
+      args:
+      - -exc
+      - |
+          echo "Copying {{ resource['name'] }} tile bits"
+          chmod +x ./offline-gen/*
+          ./offline-gen/find_and_download_stemcell.sh ./input-{{ resource['name'] }}-{{ resource['base_type'] }}
+          SC_FILE_PATH=`find ./ -name *.tgz`;
+          if [ -f "$SC_FILE_PATH" ]; then
+            echo "Stemcell file found!"
+          else
+            echo "Stemcell file not found!";
+            exit 1;
+          fi
+          mv $TILE_FILE_PATH output-{{ resource['name'] }}-{{ resource['base_type'] }}
+          mv $SC_FILE_PATH output-{{ resource['name'] }}-stemcell/
+          ls -l output-{{ resource['name'] }}-{{ resource['base_type'] }}/ output-{{ resource['name'] }}-stemcell/
+      path: /bin/bash
+  task: prepare-{{ resource['name'] }}-{{ resource['base_type'] }}-bits-to-export
+- params: {file: output-{{ resource['name'] }}-{{ resource['base_type'] }}/{{ resource['name'] }}-*}
+  put: output-{{ resource['name'] }}-{{ resource['base_type'] }}
+- params: {file: output-{{ resource['name'] }}-stemcell/bosh-*.tgz}
+  put: output-{{ resource['name'] }}-stemcell
