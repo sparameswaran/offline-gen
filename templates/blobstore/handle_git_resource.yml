@@ -1,14 +1,14 @@
 name: copy-{{ resource['name'] }}-{{ resource['base_type'] }}-to-blobstore
 plan:
 - get: input-{{ resource['name'] }}-{{ resource['base_type'] }}
-- get: pipeline_repo_converter
+- get: offline-gen-repo-converter
 - config:
     image_resource:
       source: {repository: nsxedgegen/offline-gen-worker}
       type: docker-image
     inputs:
     - {name: input-{{ resource['name'] }}-{{ resource['base_type'] }} }
-    - {name: offline-gen}
+    - {name: offline-gen-repo-converter}
     outputs:
     - {name: output-{{ resource['name'] }}-{{ resource['base_type'] }} }
     - {name: output-{{ resource['name'] }}-{{ resource['base_type'] }}-docker-images}
@@ -19,7 +19,7 @@ plan:
       - |
           echo "Searching for docker images within tasks of nsxt-ansible resource"
           cd input-{{ resource['name'] }}-{{ resource['base_type'] }}
-          python ../offline-gen/pipeline_repo_converter*.py . "{{task_list}}" "{{blobstore_source}}" \
+          python ../offline-gen-repo-converter/pipeline_repo_converter*.py . "{{task_list}}" "{{blobstore_source}}" \
              ../output-{{ resource['name'] }}-{{ resource['base_type'] }}-docker-images/{{ resource['name'] }}-docker-images.yml
           tar cfz ../output-{{ resource['name'] }}-{{ resource['base_type'] }}/{{ resource['name'] }}-tarball.tgz .
           cd ..

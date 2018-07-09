@@ -79,25 +79,35 @@ def main():
 	default_bucket_config = handler_config['s3_blobstore']
 	handle_pipeline()
 
-def add_task_handler_as_resource(pipeline):
-	task_handler_resource = { 'name': 'task_handler'}
-	task_handler_resource['type'] = 's3'
-	task_handler_resource['source'] = copy.copy(default_bucket_config)
-	task_handler_resource['source']['regexp'] = '%s/handlers/%s' % ( 'resources', 'task_handler(.*)')
-	pipeline['resources'].append(task_handler_resource)
+# def add_task_handler_as_resource(pipeline):
+# 	task_handler_resource = { 'name': 'task_handler'}
+# 	task_handler_resource['type'] = 's3'
+# 	task_handler_resource['source'] = copy.copy(default_bucket_config)
+# 	task_handler_resource['source']['regexp'] = '%s/handlers/%s' % ( 'resources', 'task_handler(.*)')
+# 	pipeline['resources'].append(task_handler_resource)
 
-def add_pipeline_repo_converter_as_resource(pipeline):
-	pipeline_repo_converter_resource = { 'name': 'pipeline_repo_converter'}
-	pipeline_repo_converter_resource['type'] = 's3'
-	pipeline_repo_converter_resource['source'] = copy.copy(default_bucket_config)
-	pipeline_repo_converter_resource['source']['regexp'] = '%s/handlers/%s' % ( 'resources', 'pipeline_repo_converter-(.*).py')
-	pipeline['resources'].append(pipeline_repo_converter_resource)
+def create_offline_repo_converter_as_resource():
+	offline_gen_resource = { 'name': 'offline-gen-repo-converter'}
+	offline_gen_resource['type'] = 's3'
+	offline_gen_resource['source'] = copy.copy(default_bucket_config)
+	offline_gen_resource['source']['regexp'] = '%s/%s.(.*)' % ( 'resources', 'offline-gen/utils/python/pipeline_repo_converter')
 
-def add_docker_image_as_resource(pipeline):
-	new_docker_resource = { 'name': 'test-ubuntu-docker'}
-	new_docker_resource['type'] = 'docker-image'
-	new_docker_resource['source'] = { 'repository' : 'ubuntu', 'tag' : '17.04' }
-	pipeline['resources'].append(new_docker_resource)
+	return offline_gen_resource
+
+def create_offline_stemcell_downloader_as_resource():
+	offline_gen_resource = { 'name': 'offline-gen-stemcell-downloader'}
+	offline_gen_resource['type'] = 's3'
+	offline_gen_resource['source'] = copy.copy(default_bucket_config)
+	offline_gen_resource['source']['regexp'] = '%s/%s(.*).sh' % ( 'resources', 'offline-gen/utils/shell/find_and_download')
+
+	return offline_gen_resource
+
+# def add_docker_image_as_resource(pipeline):
+# 	new_docker_resource = { 'name': 'test-ubuntu-docker'}
+# 	new_docker_resource['type'] = 'docker-image'
+# 	new_docker_resource['source'] = { 'repository' : 'ubuntu', 'tag' : '17.04' }
+# 	pipeline['resources'].append(new_docker_resource)
+# 	final_input_resources.append(new_docker_resource)
 
 def handle_pipeline():
 
@@ -114,11 +124,16 @@ def handle_pipeline():
 
 		handle_resources(src_pipeline)
 
-		print 'Going to render final blobstore upload pipeline wiht inputs: {}\n\n'.format(process_resource_jobs)
+		final_input_resources.append(create_offline_repo_converter_as_resource())
+		final_input_resources.append(create_offline_stemcell_downloader_as_resource())
+
+		print 'Going to render final blobstore upload pipeline with inputs: {}\n\n'.format(process_resource_jobs)
 		context = {}
 		resource_context = {
 	        'context': context,
-	        'process_resource_jobs': process_resource_jobs,
+			'source_resource_types': src_pipeline['resource_types'],
+	        #'process_resource_jobs': process_resource_jobs,
+			'resources': src_pipeline['resources'],
 			'final_input_resources': final_input_resources,
 			'final_output_resources': final_output_resources,
 	        'files': []
@@ -130,11 +145,9 @@ def handle_pipeline():
 	    )
 		print 'Job for blobstore_upload_pipeline : {}'.format(blobstore_upload_pipeline)
 
-		# REMOVE ME - SABHA
-		add_docker_image_as_resource(blobstore_upload_pipeline)
-		add_pipeline_repo_converter_as_resource(blobstore_upload_pipeline)
-
+		print 'Target Resource types is : {}'.format(blobstore_upload_pipeline['resource_types'])
 		write_config(blobstore_upload_pipeline, blobstore_upload_pipeline_filename)
+
 		print ''
 		print 'Created blobstore upload pipeline: ' + blobstore_upload_pipeline_filename
 
@@ -186,16 +199,6 @@ def identify_all_task_files(src_pipeline):
 # 			resources.append(resource)
 # 	return resources
 
-def add_inout_resources(resource):
-	input_resource = copy.copy(resource)
-	output_resource = copy.copy(resource)
-
-	input_resource['name'] = 'input-%s-%s' % (resource['name'], resource['base_type'])
-	output_resource['name'] = 'output-%s-%s' % (resource['name'], resource['base_type'])
-
-	final_input_resources.append(input_resource)
-	final_output_resources.append(output_resource)
-
 def handle_resources(src_pipeline):
 
 	task_list = identify_all_task_files(src_pipeline)
@@ -209,27 +212,45 @@ def handle_resources(src_pipeline):
 		#resource_process_job = handle_default_resource(resource)
 		#
 		if res_type == 's3':
+			#resource_process_job['type'] = 's3'
 			resource_process_job = handle_s3_resource(resource)
+
 		elif res_type == 'git':
+			#resource_process_job['type'] = 'git'
 			resource_process_job = handle_git_resource(resource, src_pipeline, task_list)
+
 		elif res_type == 'docker-image':
+			#resource_process_job['type'] = 'docker'
 			resource_process_job = handle_docker_image(resource)
 		elif res_type == 'pivnet':
 			if resource['source']['product_slug'] in [ 'ops-manager' ]:
+				#resource_process_job['type'] = 'pivnet-non-tile'
 				resource_process_job = handle_pivnet_non_tile_resource(resource)
 			else:
+				#resource_process_job['type'] = 'tile'
 				resource_process_job = handle_pivnet_tile_resource(resource)
 		else:
+			#resource_process_job['type'] = 'file'
 			resource_process_job = handle_default_resource(resource)
 
-		if resource_process_job is None:
+		#if resource_process_job is None:
 			# We need the resource as is - no transformation
-			final_input_resources.append(resource)
-		else:
-			add_inout_resources(resource)
-			process_resource_jobs.append(resource_process_job)
+		#	final_input_resources.append(resource)
+		#else:
+		#	process_resource_jobs.append(resource_process_job)
 
-	print 'Finsihed handling of all resource jobs__________________\n\n'
+	print 'Finished handling of all resource jobs__________________\n\n'
+
+
+def add_inout_resources(resource):
+	input_resource = copy.copy(resource)
+	output_resource = copy.copy(resource)
+
+	input_resource['name'] = 'input-%s-%s' % (resource['base_type'], resource['name'])
+	output_resource['name'] = 'output-%s-%s' % (resource['base_type'], resource['name'])
+
+	final_input_resources.append(input_resource)
+	final_output_resources.append(output_resource)
 
 def handle_docker_image(resource, resource_jobs):
 	print 'Handling docker image'
@@ -250,6 +271,10 @@ def handle_docker_image(resource, resource_jobs):
         resource_context
     )
 	print 'Job for Docker  resource: {}'.format(docker_job_resource)
+
+	# Register the in/out resources
+	add_inout_resources(resource)
+
 	return docker_job_resource
 
 def handle_git_resource(resource, src_pipeline, task_list):
@@ -282,6 +307,17 @@ def handle_git_resource(resource, src_pipeline, task_list):
         os.path.join('.', 'blobstore/handle_git_resource.yml' ),
         resource_context
     )
+
+	# Register the in/out resources
+	add_inout_resources(resource)
+
+	# Register the docker images list also
+	output_docker_images_resource = copy.copy(resource)
+	output_docker_images_resource['name'] = 'output-%s-%s' % ('git-docker-images', resource['name'], )
+	output_docker_images_resource['regexp'] = '%s/%s/%s-docker-(.*).yml' % ( 'resources', 'docker-images', resource['name'])
+
+	final_output_resources.append(output_docker_images_resource)
+
 	print '###### Job for Git resource: {}'.format(git_job_resource)
 	return git_job_resource
 
@@ -303,6 +339,15 @@ def handle_pivnet_tile_resource(resource):
         resource_context
     )
 
+	# Register the default in/out resources
+	add_inout_resources(resource)
+
+	# Register the stemcell also
+	output_stemcell_resource = copy.copy(resource)
+	output_stemcell_resource['name'] = 'output-%s-%s' % (resource['name'], 'stemcell')
+
+	final_output_resources.append(output_stemcell_resource)
+
 	print 'Job for Pivnet Tile resource: {}'.format(pivnet_tile_job_resource)
 	return pivnet_tile_job_resource
 
@@ -323,6 +368,10 @@ def handle_pivnet_non_tile_resource(resource):
         os.path.join('.', 'blobstore/handle_non_pivnet_tile.yml' ),
         resource_context
     )
+
+	# Register the in/out resources
+	add_inout_resources(resource)
+
 	print 'Job for Pivnet non-Tile resource: {}'.format(non_pivnet_job_resource)
 	return non_pivnet_job_resource
 
@@ -340,6 +389,7 @@ def handle_s3_resource(resource):
 	  default_bucket_config['secret_access_key']:
 		return None
 
+	# Requires modification
 	resource['base_type'] = 's3'
 	resource['regexp'] = '%s/s3/%s-(.*)' % ( 'resources', resource['name'])
 
@@ -355,6 +405,9 @@ def handle_s3_resource(resource):
         resource_context
     )
 
+	# Register the in/out resources
+	add_inout_resources(resource)
+
 	print 'Job for S3 resource: {}'.format(s3_job_resource)
 	return s3_job_resource
 
@@ -362,7 +415,7 @@ def handle_default_resource(resource):
 	print 'Default handling of resource'
 
 	resource['base_type'] = 'file'
-	resource['regexp'] = '%s/file/%s-(.*)' % ( 'resources', resource['name'])
+	resource['regexp'] = '%s/file/%s-*-(.*)' % ( 'resources', resource['name'])
 
 	context = {}
 	resource_context = {
@@ -375,6 +428,9 @@ def handle_default_resource(resource):
         os.path.join('.', 'blobstore/handle_file_resource.yml' ),
         resource_context
     )
+
+	# Register the in/out resources
+	add_inout_resources(resource)
 
 	print 'Job for File resource: {}'.format(file_job_resource)
 	return file_job_resource

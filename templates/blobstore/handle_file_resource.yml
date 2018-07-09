@@ -25,6 +25,6 @@ plan:
             fi
             ls -l output-{{ resource['name'] }}-{{ resource['base_type'] }}
       path: /bin/bash
-  task: prepare-nsx-mgr-ova-bit-to-export
+  task: prepare-{{ resource['name'] }}-to-export
 - params: {file: output-{{ resource['name'] }}-{{ resource['base_type'] }}/(({{ resource['name'] }}))-1.0}
   put: output-{{ resource['name'] }}-{{ resource['base_type'] }}

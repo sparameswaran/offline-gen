@@ -9,7 +9,7 @@ plan:
       type: docker-image
     inputs:
     - {name: input-{{ resource['name'] }}-{{ resource['base_type'] }} }
-    - {name: offline-gen}
+    - {name: offline-gen-stemcell-downloader}
     outputs:
     - {name: output-{{ resource['name'] }}-{{ resource['base_type'] }} }
     - {name: output-{{ resource['name'] }}-stemcell }
@@ -20,8 +20,8 @@ plan:
       - -exc
       - |
           echo "Copying {{ resource['name'] }} tile bits"
-          chmod +x ./offline-gen/*
-          ./offline-gen/find_and_download_stemcell.sh ./input-{{ resource['name'] }}-{{ resource['base_type'] }}
+          chmod +x ./offline-gen-stemcell-downloader/*
+          ./offline-gen-stemcell-downloader/find_and_download_stemcell.sh ./input-{{ resource['name'] }}-{{ resource['base_type'] }}
           SC_FILE_PATH=`find ./ -name *.tgz`;
           if [ -f "$SC_FILE_PATH" ]; then
             echo "Stemcell file found!"
