@@ -49,15 +49,15 @@ def handle(task_path, offline_s3_resource):
     docker_image_name = existing_task['image_resource']['source']['repository']
     version = existing_task['image_resource']['source'].get('tag')
 
-    if version is not None:
-        docker_image_repo = docker_image_name + '-' + version
-    else:
-        docker_image_repo = docker_image_name + '-latest'
+    if version is None:
+        version = 'latest'
+
+    docker_image_repo = docker_image_name + '-' + version
 
     docker_resource_path = '%s/%s-(.*).tgz' % ( DOCKER_IMAGE_PATH, docker_image_name)
-    realized_docker_resource_path = '%s/%s.tgz' % ( DOCKER_IMAGE_PATH, docker_image_repo)
+    realized_docker_resource_path = '%s/%s-docker.tgz' % ( DOCKER_IMAGE_PATH, docker_image_repo)
 
-    new_docker_entry = { docker_image_repo : realized_docker_resource_path }
+    new_docker_entry = { 'name' : docker_image_repo, 'source': existing_task['image_resource']['source'] , 'image_path' : realized_docker_resource_path }
     if new_docker_entry not in docker_list:
         docker_list.append( new_docker_entry)
 

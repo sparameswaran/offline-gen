@@ -69,7 +69,7 @@ jobs:
         - {name: offline-gen-repo-converter}
         outputs:
         - {name: output-{{ resource['base_type'] }}-{{ resource['name'] }} }
-        - {name: output-docker-images-{{ resource['name'] }}}
+        - {name: output-git-docker-images-{{ resource['name'] }}}
         platform: linux
         run:
           args:
@@ -77,12 +77,12 @@ jobs:
           - |
               echo "Searching for docker images within tasks of nsxt-ansible resource"
               cd input-{{ resource['base_type'] }}-{{ resource['name'] }}
-              PIPELINE_REPO_CONVERTER=$(find .. -name "pipeline_repo_converter*.py")
-              python $PIPELINE_REPO_CONVERTER . "{{task_list}}" "{{blobstore_source}}" \
-                 ../output-docker-images-{{ resource['name'] }}/{{ resource['name'] }}-docker-images.yml
+              PIPELINE_REPO_CONVERTER=$(find .. -name "pipeline_repo_converter.py")
+              python $PIPELINE_REPO_CONVERTER . "{{resource['task_list']}}" "{{resource['blobstore_source']}}" \
+                 ../output-git-docker-images-{{ resource['name'] }}/{{ resource['name'] }}-docker-images.yml
               tar cfz ../output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-tarball.tgz .
               cd ..
-              ls -l output-{{ resource['base_type'] }}-{{ resource['name'] }} output-docker-images-{{ resource['name'] }}
+              ls -l output-{{ resource['base_type'] }}-{{ resource['name'] }} output-git-docker-images-{{ resource['name'] }}
           path: /bin/bash
       task: prepare-{{ resource['base_type'] }}-{{ resource['name'] }}-bit-to-export
     {% elif resource['type'] == 'pivnet_non_tile' %}
@@ -198,7 +198,7 @@ jobs:
       params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-{{ resource['base_type'] }}-* }
 
       {% else %}
-      params: { file: output-{{ resource['name'] }}-{{ resource['base_type'] }}/(({{ resource['name'] }}))*-1.0* }
+      params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}*-1.0* }
 
       {% endif %}
     {% endfor %}
@@ -219,10 +219,10 @@ resources:
   {% for resource in final_output_resources %}
 - name: {{ resource['name'] }}
   source:
-    access_key_id: ((mini_access_id))
-    bucket: ((mini_bucket))
-    endpoint: ((mini_endpoint))
-    secret_access_key: ((mini_access_key))
+    access_key_id: ((minio_access_id))
+    bucket: ((minio_bucket))
+    endpoint: ((minio_endpoint))
+    secret_access_key: ((minio_access_key))
     regexp: {{ resource['regexp'] }}
   type: s3
   {% endfor %}

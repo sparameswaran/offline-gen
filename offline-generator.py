@@ -289,11 +289,15 @@ def handle_git_resource(resource, src_pipeline, task_list):
 		if task_file.startswith(res_name):
 			matching_task_files.append(task_file.replace(res_name + '/', ''))
 
-	#print 'Task list: {}'.format(matching_task_files)
+	print '####### Task list for git resource: {}'.format(matching_task_files)
 
 	# Jinja template would barf against single quote. so change to double quotes
-	task_list_arr = str(matching_task_files).replace('\'', '"')
-	bucket_config = str(default_bucket_config).replace('\'', '"')
+	task_list_arr = str(matching_task_files)#.replace('\'', '"')
+	bucket_config = str(default_bucket_config)#.replace('\'', '"')
+
+	resource['task_list'] = task_list_arr
+	resource['blobstore_source'] = bucket_config
+
 	context = {}
 	resource_context = {
         'context': context,
