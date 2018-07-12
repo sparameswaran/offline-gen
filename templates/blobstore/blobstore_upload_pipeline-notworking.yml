@@ -45,19 +45,18 @@ jobs:
           args:
             - -exc
             - |
-                echo "Exporting {{ resource['name'] }} docker image";
+                echo "Exporting {{ resource['name'] }} docker image"
                 mkdir export-directory;
                 cd export-directory;
                 cp ../input-{{ resource['base_type'] }}-{{ resource['name'] }}/metadata.json .;
-                mkdir rootfs && cd rootfs;
-                cp ../../input-{{ resource['base_type'] }}-{{ resource['name'] }}/rootfs.tar ..;
-                tar -xf ../rootfs.tar --exclude="dev/*";
-                echo "Packaging {{ resource['name'] }} docker image";
-                tmp_version="{{ resource['tag'] }}";
-                cd ..;
-                rm rootfs.tar;
-                tar -czf   "../output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-${tmp_version}.tgz" .;
-                ls -l ../output-{{ resource['base_type'] }}-{{ resource['name'] }}/;
+                mkdir rootfs && cd rootfs
+                cp ../../input-{{ resource['base_type'] }}-{{ resource['name'] }}/rootfs.tar ..
+                tar -xf ../rootfs.tar --exclude="dev/*"
+                echo "Packaging {{ resource['name'] }} docker image"
+                tmp_version="{{ resource['tag'] }}"
+                tar -czf   "../../output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-docker-${tmp_version}.tgz" .
+                cd ..
+                ls -l ../output-{{ resource['base_type'] }}-{{ resource['name'] }}/'
           path: /bin/bash
       task: prepare-{{ resource['name'] }}-docker-image-to-export
     {% elif resource['type'] == 'git' %}
@@ -86,52 +85,51 @@ jobs:
               ls -l output-{{ resource['base_type'] }}-{{ resource['name'] }} output-git-docker-images-{{ resource['name'] }}
           path: /bin/bash
       task: prepare-{{ resource['base_type'] }}-{{ resource['name'] }}-bit-to-export
-    # - config:
-    #     image_resource:
-    #       source: {repository: concourse/docker-image-resource }
-    #       type: docker-image
-    #     inputs:
-    #     - {name: output-git-docker-images-{{ resource['name'] }} }
-    #     outputs:
-    #     - {name: output-docker-{{ resource['name'] }} }
-    #     platform: linux
-    #     run:
-    #       args:
-    #         - -exc
-    #         - |
-    #             echo "Exporting {{ resource['name'] }} git docker images"
-    #             echo '{ "user": "root", "env": [ "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", "LANG=C", "HOME=/root" ] }' > /tmp/metadata.json
-    #             mkdir export-directory;
-    #             cd export-directory;
-    #             no_of_images=$(cat ../output-git-docker-images-{{ resource['name'] }}/{{ resource['name'] }}-docker-images.json | /usr/bin/jq '.docker_images | length')
-    #             index=0
-    #             while ($index -lt $no_of_images)
-    #             do
-    #               docker_image=$(cat ../output-git-docker-images-{{ resource['name'] }}/{{ resource['name'] }}-docker-images.json  | /usr/bin/jq --argjson index $index '.docker_images\\[$index\\]' )
-    #               repo=$(echo $docker_image | /usr/bin/jq -r .source.repository )
-    #               version=$(echo $docker_image | /usr/bin/jq -r .source.tag )
-    #               if [ "$version" == "" -o "$version" == "null"  ]; then
-    #                 version='latest'
-    #               fi
-    #               docker pull $repo:$version
-    #               docker save $repo:$version > ${repo}-${version}.tar
-    #               mkdir t1
-    #               cd t1
-    #               tar xvf ../${repo}-${version}.tar
-    #               cp /tmp/metadata.json .
-    #               tar cfz ../${repo}-${version}.tgz .
-    #               cd ..
-    #               rm -rf t1 ${repo}-${version}.tar
-    #               mv ${repo}-${version}.tgz ../output-docker-images-{{ resource['name'] }}/
-    #               index=$(expr index + 1)
-    #             done
-    #             cd ..
-    #             ls -l output-docker-images-{{ resource['name'] }}/
-    #             cd output-docker-images-{{ resource['name'] }}/
-    #             tar cvf {{ resource['name'] }}-docker-tarball.tar .
-    #       path: /bin/bash
-    #   task: save-{{ resource['name'] }}-git-docker-images
-    #   privileged: true # Needed for running docker within docker
+    - config:
+        image_resource:
+          source: {repository: concourse/docker-image-resource }
+          type: docker-image
+        inputs:
+        - {name: output-git-docker-images-{{ resource['name'] }} }
+        outputs:
+        - {name: output-docker-{{ resource['name'] }} }
+        platform: linux
+        run:
+          args:
+            - -exc
+            - |
+                echo "Exporting {{ resource['name'] }} git docker images"
+                echo '{ "user": "root", "env": [ "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", "LANG=C", "HOME=/root" ] }' > /tmp/metadata.json
+                mkdir export-directory;
+                cd export-directory;
+                no_of_images=$(cat output-git-docker-images-{{ resource['name'] }}/{{ resource['name'] }}-docker-images.json | jq '.docker_images | length'
+                index=0
+                while ($index -lt $no_of_images)
+                do
+                  docker_image=$(cat output-git-docker-images-{{ resource['name'] }}/{{ resource['name'] }}-docker-images.json | jq --arg index $index '.docker_images[index]' )
+                  repo=$(echo $docker_image | jq .source.repository )
+                  version=$(echo $docker_image | jq .source.tag )
+                  if [ "$version" == "" ]; then
+                    version='latest'
+                  fi
+                  docker pull $repo:$version
+                  docker save $repo:$version > ${repo}-${version}.tar
+                  mkdir t1
+                  cd t1
+                  tar xvf ../${repo}-${version}.tar
+                  cp /tmp/metadata.json .
+                  tar cfz ../${repo}-${version}.tgz .
+                  cd ..
+                  rm -rf t1 ${repo}-${version}.tar
+                  mv ${repo}-${version}.tgz ../output-docker-images-{{ resource['name'] }}/
+                done
+                cd ..
+                ls -l output-docker-images-{{ resource['name'] }}/
+                cd output-docker-images-{{ resource['name'] }}/
+                tar cvf {{ resource['name'] }}-docker-tarball.tar .
+          path: /bin/bash
+      task: save-{{ resource['name'] }}-git-docker-images
+      privileged: true # Needed for running docker within docker
 
     {% elif resource['type'] == 'pivnet_non_tile' %}
     - config:
@@ -177,7 +175,7 @@ jobs:
               OFFLINE_STEMCELL_DOWNLOADER=$(find . -name find_and_download_stemcell.sh)
               chmod +x $OFFLINE_STEMCELL_DOWNLOADER
               $OFFLINE_STEMCELL_DOWNLOADER ./input-{{ resource['base_type'] }}-{{ resource['name'] }}
-              SC_FILE_PATH=`find ./ -name bosh*.tgz`;
+              SC_FILE_PATH=`find ./ -name *.tgz`;
               if [ -f "$SC_FILE_PATH" ]; then
                 echo "Stemcell file found!"
               else
@@ -286,19 +284,18 @@ jobs:
         args:
           - -exc
           - |
-              echo "Exporting {{ resource['name'] }} docker image";
+              echo "Exporting {{ resource['name'] }} docker image"
               mkdir export-directory;
               cd export-directory;
               cp ../input-{{ resource['base_type'] }}-{{ resource['name'] }}/metadata.json .;
-              mkdir rootfs && cd rootfs;
-              cp ../../input-{{ resource['base_type'] }}-{{ resource['name'] }}/rootfs.tar ..;
-              tar -xf ../rootfs.tar --exclude="dev/*";
-              echo "Packaging {{ resource['name'] }} docker image";
-              tmp_version="{{ resource['tag'] }}";
-              cd ..;
-              rm rootfs.tar;
-              tar -czf   "../output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-${tmp_version}.tgz" .;
-              ls -l ../output-{{ resource['base_type'] }}-{{ resource['name'] }}/;
+              mkdir rootfs && cd rootfs
+              cp ../../input-{{ resource['base_type'] }}-{{ resource['name'] }}/rootfs.tar ..
+              tar -xf ../rootfs.tar --exclude="dev/*"
+              echo "Packaging {{ resource['name'] }} docker image"
+              tmp_version="{{ resource['tag'] }}"
+              tar -czf   "../../output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-docker-${tmp_version}.tgz" .
+              cd ..
+              ls -l ../output-{{ resource['base_type'] }}-{{ resource['name'] }}/'
         path: /bin/bash
     task: prepare-{{ resource['name'] }}-docker-image-to-export
   {% elif resource['type'] == 'git' %}
@@ -327,53 +324,51 @@ jobs:
             ls -l output-{{ resource['base_type'] }}-{{ resource['name'] }} output-git-docker-images-{{ resource['name'] }}
         path: /bin/bash
     task: prepare-{{ resource['base_type'] }}-{{ resource['name'] }}-bit-to-export
-  #
-  # - config:
-  #     image_resource:
-  #       source: {repository: concourse/docker-image-resource }
-  #       type: docker-image
-  #     inputs:
-  #     - {name: output-git-docker-images-{{ resource['name'] }} }
-  #     outputs:
-  #     - {name: output-docker-{{ resource['name'] }} }
-  #     platform: linux
-  #     run:
-  #       args:
-  #         - -exc
-  #         - |
-  #             echo "Exporting {{ resource['name'] }} git docker images"
-  #             echo '{ "user": "root", "env": [ "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", "LANG=C", "HOME=/root" ] }' > /tmp/metadata.json
-  #             mkdir export-directory;
-  #             cd export-directory;
-  #             no_of_images=$(cat ../output-git-docker-images-{{ resource['name'] }}/{{ resource['name'] }}-docker-images.json | /usr/bin/jq '.docker_images | length')
-  #             index=0
-  #             while [ $index -lt $no_of_images ]
-  #             do
-  #               docker_image=$(cat ../output-git-docker-images-{{ resource['name'] }}/{{ resource['name'] }}-docker-images.json | /usr/bin/jq --argjson index $index '.docker_images[$index]' )
-  #               repo=$(echo $docker_image | /usr/bin/jq '.source.repository' )
-  #               version=$(echo $docker_image | /usr/bin/jq .source.tag )
-  #               if [ "$version" == "" -o "$version" == "null" ]; then
-  #                 version=latest
-  #               fi
-  #               docker pull ${repo}:${version}
-  #               docker save ${repo}:${version} > ${repo}-${version}.tar
-  #               mkdir t1
-  #               cd t1
-  #               tar xvf ../${repo}-${version}.tar
-  #               cp /tmp/metadata.json .
-  #               tar cfz ../${repo}-${version}.tgz .
-  #               cd ..
-  #               rm -rf t1 ${repo}-${version}.tar
-  #               mv ${repo}-${version}.tgz ../output-docker-images-{{ resource['name'] }}/
-  #               index=$(expr index + 1)
-  #             done
-  #             cd ..
-  #             ls -l output-docker-images-{{ resource['name'] }}/
-  #             cd output-docker-images-{{ resource['name'] }}/
-  #             tar cvf {{ resource['name'] }}-docker-tarball.tar .
-  #       path: /bin/bash
-  #   task: save-{{ resource['name'] }}-git-docker-images
-  #   privileged: true # Needed for running docker within docker
+  - config:
+      image_resource:
+        source: {repository: concourse/docker-image-resource }
+        type: docker-image
+      inputs:
+      - {name: output-git-docker-images-{{ resource['name'] }} }
+      outputs:
+      - {name: output-docker-{{ resource['name'] }} }
+      platform: linux
+      run:
+        args:
+          - -exc
+          - |
+              echo "Exporting {{ resource['name'] }} git docker images"
+              echo '{ "user": "root", "env": [ "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", "LANG=C", "HOME=/root" ] }' > /tmp/metadata.json
+              mkdir export-directory;
+              cd export-directory;
+              no_of_images=$(cat output-git-docker-images-{{ resource['name'] }}/{{ resource['name'] }}-docker-images.json | jq '.docker_images | length'
+              index=0
+              while ($index -lt $no_of_images)
+              do
+                docker_image=$(cat output-git-docker-images-{{ resource['name'] }}/{{ resource['name'] }}-docker-images.json | jq --arg index $index '.docker_images[index]' )
+                repo=$(echo $docker_image | jq .source.repository )
+                version=$(echo $docker_image | jq .source.tag )
+                if [ "$version" == '' ]; then
+                  version='latest'
+                fi
+                docker pull $repo:$version
+                docker save $repo:$version > ${repo}-${version}.tar
+                mkdir t1
+                cd t1
+                tar xvf ../${repo}-${version}.tar
+                cp /tmp/metadata.json .
+                tar cfz ../${repo}-${version}.tgz .
+                cd ..
+                rm -rf t1 ${repo}-${version}.tar
+                mv ${repo}-${version}.tgz ../output-docker-images-{{ resource['name'] }}/
+              done
+              cd ..
+              ls -l output-docker-images-{{ resource['name'] }}/
+              cd output-docker-images-{{ resource['name'] }}/
+              tar cvf {{ resource['name'] }}-docker-tarball.tar .
+        path: /bin/bash
+    task: save-{{ resource['name'] }}-git-docker-images
+    privileged: true # Needed for running docker within docker
 
   {% elif resource['type'] == 'pivnet_non_tile' %}
   - config:
@@ -419,7 +414,7 @@ jobs:
             OFFLINE_STEMCELL_DOWNLOADER=$(find . -name find_and_download_stemcell.sh)
             chmod +x $OFFLINE_STEMCELL_DOWNLOADER
             $OFFLINE_STEMCELL_DOWNLOADER ./input-{{ resource['base_type'] }}-{{ resource['name'] }}
-            SC_FILE_PATH=`find ./ -name bosh*.tgz`;
+            SC_FILE_PATH=`find ./ -name *.tgz`;
             if [ -f "$SC_FILE_PATH" ]; then
               echo "Stemcell file found!"
             else
@@ -462,7 +457,7 @@ jobs:
   - put: output-{{ resource['base_type'] }}-{{resource['name']}}
 
     {% if resource['base_type'] == 'docker' %}
-    params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-*.tgz }
+    params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-docker*.tgz }
 
     {% elif resource['type'] == 'git' %}
 

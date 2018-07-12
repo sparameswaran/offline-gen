@@ -21,7 +21,7 @@ def main():
     #tasks = tasks_list_arr
     if tasks_list_arr is None or tasks_list_arr == '' or tasks_list_arr == '[]' :
         docker_images = { 'docker_images' : [] }
-        write_config(docker_images, docker_images_file )
+        write_config_as_json(docker_images, docker_images_file )
         return
 
     #print 'Offline S3 resource: {}'.format(offline_s3_resource)    if os.path.isfile(source_config_file):
@@ -35,7 +35,7 @@ def main():
 
     print 'Docker List: {}'.format(docker_list)
     docker_images = { 'docker_images' : docker_list }
-    write_config(docker_images, docker_images_file )
+    write_config_as_json(docker_images, docker_images_file )
 
 def handle(task_path, offline_s3_resource):
 
@@ -93,6 +93,16 @@ def write_config(content, destination):
 	try:
 		with open(destination, 'w') as output_file:
 			yaml.dump(content, output_file,  Dumper=NoAliasDumper)
+
+	except IOError as e:
+		print('Error : {}'.format(e))
+		print >> sys.stderr, 'Problem with writing out a yaml file.'
+		sys.exit(1)
+
+def write_config_as_json(content, destination):
+	try:
+		with open(destination, 'w') as output_file:
+			json.dump(yaml.safe_load(str(content)), output_file,  Dumper=NoAliasDumper)
 
 	except IOError as e:
 		print('Error : {}'.format(e))
