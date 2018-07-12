@@ -53,10 +53,9 @@ jobs:
                 cp ../../input-{{ resource['base_type'] }}-{{ resource['name'] }}/rootfs.tar ..;
                 tar -xf ../rootfs.tar --exclude="dev/*";
                 echo "Packaging {{ resource['name'] }} docker image";
-                tmp_version="{{ resource['tag'] }}";
                 cd ..;
                 rm rootfs.tar;
-                tar -czf   "../output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-${tmp_version}.tgz" .;
+                tar -czf   "../output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}.tgz" .;
                 ls -l ../output-{{ resource['base_type'] }}-{{ resource['name'] }}/;
           path: /bin/bash
       task: prepare-{{ resource['name'] }}-docker-image-to-export
@@ -97,7 +96,7 @@ jobs:
           args:
           - -exc
           - |
-              echo \"Copying {{ resource['name'] }}-{{ resource['base_type'] }} bits\"
+              echo \"Copying {{ resource['name'] }} bits\"
               rm input-{{ resource['base_type'] }}-{{ resource['name'] }}/version input-{{ resource['base_type'] }}-{{ resource['name'] }}/metadata*
               file_name=$(ls input-{{ resource['base_type'] }}-{{ resource['name'] }}/)
               mv input-{{ resource['base_type'] }}-{{ resource['name'] }}/* output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-{{ resource['base_type'] }}-${file_name}
@@ -192,7 +191,7 @@ jobs:
     - put: output-{{ resource['base_type'] }}-{{resource['name']}}
 
       {% if resource['base_type'] == 'docker' %}
-      params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-docker*.tgz }
+      params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}* }
 
       {% elif resource['base_type'] == 'git' %}
 
@@ -254,10 +253,9 @@ jobs:
               cp ../../input-{{ resource['base_type'] }}-{{ resource['name'] }}/rootfs.tar ..;
               tar -xf ../rootfs.tar --exclude="dev/*";
               echo "Packaging {{ resource['name'] }} docker image";
-              tmp_version="{{ resource['tag'] }}";
               cd ..;
               rm rootfs.tar;
-              tar -czf   "../output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-${tmp_version}.tgz" .;
+              tar -czf   "../output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}.tgz" .;
               ls -l ../output-{{ resource['base_type'] }}-{{ resource['name'] }}/;
         path: /bin/bash
     task: prepare-{{ resource['name'] }}-docker-image-to-export
@@ -383,7 +381,7 @@ jobs:
   - put: output-{{ resource['base_type'] }}-{{resource['name']}}
 
     {% if resource['base_type'] == 'docker' %}
-    params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-*.tgz }
+    params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}* }
 
     {% elif resource['type'] == 'git' %}
     params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-tarball.tgz }

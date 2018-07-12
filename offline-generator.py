@@ -846,7 +846,7 @@ def handle_docker_image(resource):
 
 	resource['base_type'] = 'docker'
 	resource['tag'] = resource['source']['tag']
-	resource['regexp'] = '%s/docker/%s' % ( 'resources', resource['name'] + '-(.*).tgz')
+	resource['regexp'] = '%s/docker/%s' % ( 'resources', resource['name'] + '*.(.*)')
 
 	context = {}
 	resource_context = {
@@ -1047,9 +1047,16 @@ def read_config(input_file):
 			yamlcontent = yaml.safe_load(config_file)
 			return yamlcontent
 	except IOError as e:
-		print e + ' attempting to open : ' + input_file
-		print >> sys.stderr, 'Not a yaml config file.'
+		print >> sys.stderr, 'Problem with file, abort!'
 		sys.exit(1)
+	except Exception as ce:
+		print ce
+		print >> sys.stderr, 'Not a yaml config file.'
+		print >> sys.stderr, 'Attempting to modify {{ ... }} to (( ... )) and retry'
+		with open(input_file) as config_file:
+			data = config_file.read().replace('{{', '))').replace('}}', '))')
+			yamlcontent = yaml.load(data)
+			return yamlcontent
 
 def write_config(content, destination):
 	try:
