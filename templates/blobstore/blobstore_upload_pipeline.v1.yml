@@ -55,7 +55,7 @@ jobs:
                 echo "Packaging {{ resource['name'] }} docker image";
                 cd ..;
                 rm rootfs.tar;
-                tar -czf   "../output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}.tgz" .;
+                tar -czf   "../output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-{{ resource['tag'] }}-docker.tgz" .;
                 ls -l ../output-{{ resource['base_type'] }}-{{ resource['name'] }}/;
           path: /bin/bash
       task: prepare-{{ resource['name'] }}-docker-image-to-export
@@ -197,7 +197,7 @@ jobs:
     - put: output-{{ resource['base_type'] }}-{{resource['name']}}
 
       {% if resource['base_type'] == 'docker' %}
-      params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}* }
+      params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}*.tgz }
 
       {% elif resource['base_type'] == 'git' %}
 
@@ -264,7 +264,7 @@ jobs:
               echo "Packaging {{ resource['name'] }} docker image";
               cd ..;
               rm rootfs.tar;
-              tar -czf   "../output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}.tgz" .;
+              tar -czf   "../output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-{{ resource['tag'] }}-docker.tgz" .;
               ls -l ../output-{{ resource['base_type'] }}-{{ resource['name'] }}/;
         path: /bin/bash
     task: prepare-{{ resource['name'] }}-docker-image-to-export

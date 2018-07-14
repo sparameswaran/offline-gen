@@ -171,6 +171,9 @@ def save_offline_pipeline(offline_pipeline_filename):
 
 def save_blobuploader_pipeline(input_resources, output_resources, blobstore_upload_pipeline_filename):
 
+	if src_pipeline.get('resource_types') is None:
+		src_pipeline['resource_types'] = []
+
 	try:
 		context = {}
 		resource_context = {
@@ -518,78 +521,84 @@ def find_match_in_list(list, name):
 
 def handle_offline_tasks():
 
-
-	job_tasks_references = docker_image_analysis_map['pipeline_task_docker_references']['target-pipeline']['job_tasks_references']
-
 	resource_lookup_map = {}
-	for job_tasks_reference in job_tasks_references:
-		target_job_name = job_tasks_reference.keys()[0]
-		for job_inner_task in job_tasks_reference[target_job_name]:
+	job_tasks_references = docker_image_analysis_map['pipeline_task_docker_references']['target-pipeline']['job_tasks_references']
+	for offline_job in offline_pipeline['jobs']:
 
-			target_task_name = job_inner_task.get('task')
-			target_task_file = job_inner_task.get('file')
+		found_job_tasks_reference = False
+		for job_tasks_reference in job_tasks_references:
+			ref_map_target_job_name = job_tasks_reference.keys()[0]
+			for job_inner_task in job_tasks_reference[ref_map_target_job_name]:
 
-			offline_job = None
-			for off_job in offline_pipeline['jobs']:
-				if off_job['name'] == target_job_name:
-					offline_job = off_job
+				target_task_name = job_inner_task.get('task')
+				target_task_file = job_inner_task.get('file')
+
+				if offline_job['name'] == ref_map_target_job_name:
+					found_job_tasks_reference = True
 					break
 
-			plan_index = 0
-			plan_inputs = []
+		plan_index = 0
+		saved_plan_inputs = []
 
-			for plan in offline_job['plan']:
-				#print '## Current job: {}, set of keys inside plan: {} and type: {}\n\n\n'.format(target_job_name, plan.keys(), type(plan))
+		for plan in offline_job['plan']:
+			#print '## Current job: {}, set of keys inside plan: {} and type: {}\n\n\n'.format(ref_map_target_job_name, plan.keys(), type(plan))
 
-				non_resource_related_entry_map = {}
-				last_saved_plan_entry_map = {}
+			non_resource_related_entry_map = {}
+			last_saved_plan_entry_map = {}
 
-				#print '\n^^^^^ STARTING OFF: JOB: {}, PLAN : {}, Saved INPUTS: {} '.format(target_job_name, plan, plan_inputs)
-				for plan_key in plan:
+			#print '\n^^^^^ STARTING OFF: JOB: {}, PLAN : {}, Saved INPUTS: {} '.format(ref_map_target_job_name, plan, saved_plan_inputs)
+			for plan_key in plan:
 
-					plan_entry = plan[plan_key]
-					if plan_key in ['aggregate' , 'do' ]:
+				plan_entry = plan[plan_key]
+				if plan_key in ['aggregate' , 'do' ]:
 
-						original_aggregate = copy.copy(plan_entry)
-						handle_aggregated_plan_entry(plan, plan_key, original_aggregate, resource_lookup_map, job_tasks_reference)
+					original_aggregate = copy.copy(plan_entry)
+					handle_aggregated_plan_entry(plan, plan_key, original_aggregate, resource_lookup_map, job_tasks_reference)
 
-						for new_entry in plan[plan_key]:
-							for entry_key, entry_value in new_entry.items():
-								if entry_key == 'get' and entry_value not in plan_inputs:
-									plan_inputs.append(entry_value)
+					for new_entry in plan[plan_key]:
+						for entry_key, entry_value in new_entry.items():
+							if entry_key == 'get' and entry_value not in saved_plan_inputs:
+								saved_plan_inputs.append(entry_value)
 
 
-						#print 'Final plan entry: {} and plan:{}'.format(plan[plan_key], plan)
-					elif plan_key in [ 'file', 'task', 'params' ]:
-						inline_task_details(plan, resource_lookup_map, target_job_name, plan_inputs)
+					#print 'Final plan entry: {} and plan:{}'.format(plan[plan_key], plan)
+				elif plan_key in [ 'file', 'task' ]:
+					inline_task_details(plan, resource_lookup_map, ref_map_target_job_name, saved_plan_inputs)
 
-					elif 'get' == plan_key:
+				elif 'get' == plan_key:
 
-						for plan_entry in plan.keys():
-							original_get_resource_name = plan[plan_entry]
-							new_nested_plan_entries = handle_get_resource_details(original_get_resource_name, job_tasks_reference)
-							#print 'For PURE GET: Modified nested plan entries: {}\n\n'.format(new_nested_plan_entries)
-							if new_nested_plan_entries is not None:
-								plan['aggregate'] = new_nested_plan_entries
+					for plan_entry in plan.keys():
+						if plan_entry != 'get':
+							# Skip non-get attributes
+							continue
 
-								for nested_plan_entry in new_nested_plan_entries:
-									(entry_key, entry_value), = nested_plan_entry.items()
-									if entry_key == 'get' and entry_value not in plan_inputs:
-										plan_inputs.append(entry_value)
+						original_get_resource_name = plan[plan_entry]
+						new_nested_plan_entries = handle_get_resource_details(original_get_resource_name, job_tasks_reference)
+						if new_nested_plan_entries is not None:
+							plan['aggregate'] = new_nested_plan_entries
 
-							plan.pop('get', None)
-					else:
-						# Just save the entry as is (we are only worried abt tasks and gets that need modification)
-						# Check if the task has already been processed!!
-						embedded_task = plan.get('task')
-						if embedded_task is not None and 'offlined' not in embedded_task:
-							print 'Inlined task : {} in Job: {} needs to be handled!!'.format(embedded_task, target_job_name )
+							for nested_plan_entry in new_nested_plan_entries:
+								(entry_key, entry_value), = nested_plan_entry.items()
+								if entry_key == 'get' and entry_value not in saved_plan_inputs:
+									saved_plan_inputs.append(entry_value)
 
-						#plan[plan_key][nested_entry_key] = plan_entry[nested_entry_key]
-						#print 'Updated Plan : {} , plan_key: {} and plan entry is : {}'.format(plan, plan_key, plan_entry)
-						#print '####### \n\nPlan getting skipped over: {}\n\n'.format(plan)
+						plan.pop('get', None)
+				else:
+					# Just save the entry as is (we are only worried abt tasks and gets that need modification)
+					# Check if the task has already been processed!!
+					embedded_task = plan.get('task')
+					# if embedded_task is not None and 'offlined' not in embedded_task:
+					# 	print 'WARNING!! Inlined task : {} in Job: {} needs to be handled!!'.format(embedded_task, ref_map_target_job_name )
 
-				plan_index += 1
+					#plan[plan_key][nested_entry_key] = plan_entry[nested_entry_key]
+					#print 'Updated Plan : {} , plan_key: {} and plan entry is : {}'.format(plan, plan_key, plan_entry)
+					#print '####### \n\nPlan getting skipped over: {}\n\n'.format(plan)
+
+			# Pop off any image references from the plan
+			# We want to purely go with image_resource and not image
+			plan.pop('image', None)
+
+			plan_index += 1
 	print 'Finished handling of all jobs in offline pipeline'
 
 def handle_aggregated_plan_entry(plan, aggregate_key, original_aggregate, resource_lookup_map, job_tasks_reference):
@@ -680,21 +689,21 @@ def handle_get_resource_details(original_get_resource_name, job_tasks_reference)
 		original_resource_type = matching_orginal_resource['type']
 
 	matching_offline_resource = find_match_in_list(offline_pipeline['resources'], original_get_resource_name)
-	if matching_offline_resource is not None and original_resource_type == 'git':
-		matching_tarballed_git_resource = matching_offline_resource
+	if matching_offline_resource is not None:
+		matching_tarballed_resource = matching_offline_resource
+
+	if matching_orginal_resource is None:
+		print 'Unable to find matching resource: {}'.format(original_get_resource_name)
+		return None
 
 	# Add the github tarball as input if its a match against git resources in offline pipeline
-	if original_resource_type in [ 'file-url', 'file', 'docker', 'docker-image', 's3' ]:
+	if original_resource_type in [ 'file-url', 'file', 's3' ]:
 		# Add original input resource as is
 		new_nested_plan_entries.append(  { 'get' :  original_get_resource_name } )
 
-	elif original_resource_type in [ 'git' ]:
+	elif original_resource_type in [ 'docker', 'docker-image', 'git' ]:
 
-		if matching_tarballed_git_resource is None:
-			print 'Unable to find matching git resource: {}'.format(original_get_resource_name + '-tarball')
-			return None
-
-		git_resource_id = original_get_resource_name
+		resource_id = original_get_resource_name
 
 		job_name = job_tasks_reference.keys()[0]
 
@@ -708,7 +717,7 @@ def handle_get_resource_details(original_get_resource_name, job_tasks_reference)
 			#print 'Job tasks is {} and Task is {}'.format(job_tasks_reference, job_task)
 			matching_task_name = job_task['task']
 
-			for task_defn_map in docker_image_analysis_map['pipeline_task_docker_references'][git_resource_id]['task_defns']:
+			for task_defn_map in docker_image_analysis_map['pipeline_task_docker_references'][resource_id]['task_defns']:
 				for key in task_defn_map:
 					if key == matching_task_name:
 						task_defn = task_defn_map[key]
@@ -722,7 +731,7 @@ def handle_get_resource_details(original_get_resource_name, job_tasks_reference)
 						docker_image_tarball_name = '%s-%s-%s-tarball' % (docker_image_ref['repository'].replace('/', '-'), version, 'docker')
 						break
 
-		new_git_plan_entry = { 'get' : matching_tarballed_git_resource['name'] }
+		new_git_plan_entry = { 'get' : matching_tarballed_resource['name'] }
 		new_docker_plan_entry = { 'get' :  docker_image_tarball_name }
 
 		if new_git_plan_entry not in new_nested_plan_entries:
@@ -750,17 +759,22 @@ def handle_get_resource_details(original_get_resource_name, job_tasks_reference)
 
 	return new_nested_plan_entries
 
-def inline_task_details(plan, resource_lookup_map, target_job_name, plan_inputs):
+def inline_task_details(plan, resource_lookup_map, ref_map_target_job_name, saved_plan_inputs):
 
 	given_task_name = plan.get('task')
 	given_task_file = plan.get('file')
 	given_task_params = plan.get('params')
 
-	print 'Inline Task details top Job name:{}, for task:{} with file:{} and given plan level inputs:{} \n\n'.format(
-					target_job_name,given_task_name, given_task_file, plan_inputs)
+	# print 'Inline Task details for Ref map Job name:{}, for plan:{}, for task: {} with file:{} \
+	# 		and given plan level inputs:{} \n\n'.format( \
+	# 				ref_map_target_job_name, plan, given_task_name, \
+	# 				given_task_file, saved_plan_inputs)
 
 	# If the plan task has already been inlined, return
 	if given_task_file is None and 'offlined-' in given_task_name:
+		return
+	elif given_task_file is None:
+		handle_preinlined_task_details(plan, saved_plan_inputs)
 		return
 
 	index = given_task_file.index('/')
@@ -775,7 +789,7 @@ def inline_task_details(plan, resource_lookup_map, target_job_name, plan_inputs)
 	original_task_outputs = None
 	original_task_script = None
 	original_task_inputs = []
-	for entry in plan_inputs:
+	for entry in saved_plan_inputs:
 		original_task_inputs.append( { 'name' : entry } )
 
 	task_defn_found = False
@@ -790,6 +804,7 @@ def inline_task_details(plan, resource_lookup_map, target_job_name, plan_inputs)
 			#print 'Task Defn : {}, seaching for: {} and task file:{}'.format(task_defn, given_task_name, given_task_file)
 			if task_defn['file'] in given_task_file:
 				docker_image_ref = task_defn['image']
+
 				if task_defn['inputs'] is not None:
 					original_task_inputs.extend(task_defn['inputs'])
 
@@ -797,10 +812,15 @@ def inline_task_details(plan, resource_lookup_map, target_job_name, plan_inputs)
 				original_task_script = task_defn['script']
 
 				version = 'latest' if docker_image_ref.get('tag') is None else docker_image_ref.get('tag')
-				docker_image_ref['tag'] = version
 				docker_image_tarball_name = '%s-%s-%s-tarball' % (docker_image_ref['repository'].replace('/', '-'), version, 'docker')
-				docker_tarball_regex = '%s/docker/%s-(.*).tgz' % ( 'resources', docker_image_tarball_name)
+				matching_tarballed_docker_resource = find_match_in_list(offline_pipeline['resources'], docker_image_tarball_name)
 
+				docker_image_ref['tag'] = version
+				docker_image_tarball_name = '%s-%s-%s' % (docker_image_ref['repository'].replace('/', '-'), version, 'docker')
+				docker_tarball_regex = '%s/docker/%s.(.*)' % ( 'resources', docker_image_tarball_name)
+
+				source_bucket_details = copy.copy(default_bucket_config)
+				source_bucket_details['regexp'] = docker_tarball_regex
 				#print '\n## Found Task Defn: {} Original Task Inputs: {} and original_task_script: \
 				#	 		{}\n'.format(given_task_name, original_task_inputs, original_task_script)
 				#
@@ -810,14 +830,8 @@ def inline_task_details(plan, resource_lookup_map, target_job_name, plan_inputs)
 
 	image_source = {
 						'type': 's3',
-						'source' : {
-								'bucket' : '((s3_bucket))',
-								'access_key_id': '((s3_access_key_id))',
-								'secret_access_key': '((s3_secret_access_key))',
-								'endpoint': '((s3_endpoint))',
-								'regexp': '%s' % (docker_tarball_regex)
-						 },
-						 'params' : { 'unpack': True }
+						'source' : source_bucket_details,
+						'params' : { 'unpack': True }
 
 					}
 
@@ -833,6 +847,7 @@ def inline_task_details(plan, resource_lookup_map, target_job_name, plan_inputs)
 	#print '\n## Task: {} Original Task Inputs: {} and original_task_script: {}\n'.format(given_task_name,
 	# 														original_task_inputs, original_task_script)
 
+	matching_tarballed_resource = None
 	for original_input in original_task_inputs:
 
 		matching_tarballed_git_resource = None
@@ -878,15 +893,132 @@ def inline_task_details(plan, resource_lookup_map, target_job_name, plan_inputs)
 	run_command_str = ''
 	run_command_str_list = list(run_command_str)
 	run_command_str_list.append('ls -lR;')
-	for tarball_resource in tarball_resources_to_extract_map.keys():
-		run_command_str_list.append('cd %s; tar -zxf ../%s-tarball/*; cd ..;' % (tarball_resource, tarball_resources_to_extract_map[tarball_resource]))
 
-	run_command_str_list.append('echo Extracted git repo from tarballs!!;')
+	for tarball_resource in tarball_resources_to_extract_map.keys():
+		if matching_tarballed_resource is None or (matching_tarballed_resource['name'] not in tarball_resource):
+			run_command_str_list.append('cd %s; tar -zxf ../%s-tarball/*; cd ..;' % (tarball_resource, tarball_resources_to_extract_map[tarball_resource]))
+
 	run_command_str_list.append('echo Starting main task execution!!;')
 	run_command_str_list.append(original_task_script)
 
 	full_run_command = { 'path' : '/bin/bash'}
-	full_run_command['args'] = [ '-exc' , str(run_command_str_list)[2:-2] ]
+	full_run_command['args'] = [ '-exc' , "".join(run_command_str_list) ]
+	plan['config']['run'] = full_run_command
+	plan['config']['inputs'] = clean_list(new_task_inputs)
+	plan.pop('file', None)
+
+	plan['task'] = 'offlined-' + plan['task']
+
+	if new_task_outputs is not None:
+		plan['config']['outputs'] = clean_list(new_task_outputs)
+
+	#print 'Final inlined task plan: {}'.format(plan)
+
+def handle_preinlined_task_details(plan, saved_plan_inputs):
+
+	given_task_name = plan.get('task')
+	given_task_params = plan.get('params')
+
+	# print 'Pre-inlined Task details top Job name:{}, for task:{} and given plan level inputs:{} \n\n'.format(
+	# 				plan, given_task_name, saved_plan_inputs)
+
+	# If the plan task has already been inlined, return
+	if 'offlined-' in given_task_name:
+		return
+
+	# If the task is a match, then proceed with updating the task reference to use tarballed docker image
+	# and special handling
+
+	docker_image_tarball_name = None
+	docker_tarball_regex = None
+
+	original_task_script = plan['config']['run']['args'][1]
+	original_task_inputs = []
+	for entry in saved_plan_inputs:
+		original_task_inputs.append( { 'name' : entry } )
+
+	original_task_outputs = plan.get('outputs')
+	original_task_run = plan['config']['run']
+
+	# Start with the docker image tarball
+	new_task_inputs = []
+	new_task_outputs = original_task_outputs
+	#print 'New Task Outputs: {}'.format(new_task_outputs)
+
+	tarball_resources_to_extract_map = {}
+
+	#print '\n## Task: {} Original Task Inputs: {} and original_task_script: {}\n'.format(given_task_name,
+	# 														original_task_inputs, original_task_script)
+
+	#print 'Finding matching input sources and extracting tarball'
+	for original_input in original_task_inputs:
+
+		matching_tarballed_git_resource = None
+		#print 'Finding matching input source: {}'.format(original_input['name'])
+		#print 'Original Input is : {}'.format(original_input)
+		matching_tarballed_resource = find_match_in_list(offline_pipeline['resources'], original_input['name'])
+
+		if matching_tarballed_resource is None:
+			matching_tarballed_resource = find_match_in_list(offline_pipeline['resources'], original_input['name'] + '-tarball')
+
+		if matching_tarballed_resource is not None:
+			# Add the github tarball as input if its a match against git resources in offline pipeline
+			new_task_inputs.append( { 'name' : matching_tarballed_resource['name'] } )
+			if new_task_outputs is None:
+				new_task_outputs = []
+
+			if 'tarball' not in original_input['name']:
+				new_task_outputs.append( { 'name' : original_input['name'] } )
+
+			# Use same input name in the map as coming with its registered name
+			tarball_resources_to_extract_map[original_input['name'] ] = original_input['name']
+
+		else:
+			matching_resource = find_match_in_list(offline_pipeline['resources'], original_input['name'])
+			if matching_resource is not None:
+				# add the input as is
+				new_task_inputs.append( { 'name': original_input['name'] } )
+			else:
+				aliased_resource_name = original_input['name']
+				original_underlying_resource = resource_lookup_map[aliased_resource_name]
+				if original_underlying_resource is not None:
+
+					matching_tarballed_resource = find_match_in_list(offline_pipeline['resources'], original_underlying_resource + '-tarball')
+					if matching_tarballed_resource is not None:
+						new_task_inputs.append( { 'name' : matching_tarballed_resource['name'] } )
+						if new_task_outputs is None:
+							new_task_outputs = []
+						new_task_outputs.append( { 'name' : aliased_resource_name } )
+						# Map the aliased name against registered resource name
+						tarball_resources_to_extract_map[aliased_resource_name ] = original_underlying_resource
+					else:
+						new_task_inputs.append( { 'name': original_underlying_resource } )
+				else:
+					print '\n## Unable to find associated Resource for : {}'.format(original_input['name'])
+				#complete_plan_entry = plan['get']
+
+			#print '\n## Task Input not a tarball: {}\n'.format(original_input)
+
+	plan['config']['image_resource'] = {
+										'params': { 'unpack' : True} ,
+										'type': 's3',
+										'source' : matching_tarballed_resource['source']
+									}
+	plan['config'].pop('image', None)
+
+
+	run_command_str = ''
+	run_command_str_list = list(run_command_str)
+	run_command_str_list.append('ls -lR;')
+	for tarball_resource in tarball_resources_to_extract_map.keys():
+		if matching_tarballed_resource['name'] not in tarball_resource:
+			run_command_str_list.append('cd %s; tar -zxf ../%s-tarball/*; cd ..;' % (tarball_resource, tarball_resources_to_extract_map[tarball_resource]))
+
+	run_command_str_list.append('echo Starting main task execution!!;')
+	run_command_str_list.append(original_task_script)
+
+	full_run_command = { 'path' : '/bin/bash'}
+	full_run_command['args'] = [ '-exc' , "".join(run_command_str_list) ]
 	plan['config']['run'] = full_run_command
 	plan['config']['inputs'] = clean_list(new_task_inputs)
 	plan.pop('file', None)
@@ -913,13 +1045,13 @@ def add_inout_resources(resource):
 	output_resource['name'] = 'output-%s-%s' % (resource['base_type'], resource['name'])
 
 	output_resource['source'] = copy.copy(default_bucket_config)
-	output_resource['source']['regex'] = output_resource['regexp']
+	output_resource['source']['regexp'] = output_resource['regexp']
 
 	final_input_resources.append(input_resource)
 	final_output_resources.append(output_resource)
 
 	offline_resource = { 'name' : resource['name'] , 'type': 's3' , 'source': copy.copy(default_bucket_config) }
-	offline_resource['source']['regex'] = copy.copy(resource['regexp'])
+	offline_resource['source']['regexp'] = copy.copy(resource['regexp'])
 	# For git or docker resource, change name to *-tarball
 	if resource['base_type'] in ['git', 'docker' ]:
 		offline_resource['name'] = '%s-tarball' % (resource['name'])
@@ -930,9 +1062,11 @@ def handle_docker_image(resource):
 
 	resource['base_type'] = 'docker'
 	tag = resource['source'].get('tag')
-	if tag is not None:
-		resource['tag'] = tag
-	resource['regexp'] = '%s/docker/%s' % ( 'resources', resource['name'] + '*.(.*)')
+	if tag is None:
+		tag = 'latest'
+
+	resource['tag'] = tag
+	resource['regexp'] = '%s/docker/%s-%s-docker.(.*)' % ( 'resources', resource['name'], tag)
 
 	context = {}
 	resource_context = {
@@ -1036,14 +1170,14 @@ def handle_pivnet_tile_resource(resource):
 	final_output_resources.append(output_tile_stemcell_resource)
 
 	offline_stemcell_resource = { 'name' : resource['name'] , 'type': 's3' , 'source': default_bucket_config }
-	offline_stemcell_resource['source']['regex'] = stemcell_regexp
+	offline_stemcell_resource['source']['regexp'] = stemcell_regexp
 	offline_stemcell_resource['name'] = '%s-%s' % (resource['name'], 'stemcell')
 
 	offline_pipeline['resources'].append(offline_stemcell_resource)
 
 	tile_tarball_regexp = '%s/pivnet-tile/%s-tarball/(.*).tgz' % ( 'resources', resource['name'])
 	offline_tile_tarball_resource = { 'name' : '%s-tarball' % resource['name'] , 'type': 's3' , 'source': default_bucket_config }
-	offline_tile_tarball_resource['source']['regex'] = tile_tarball_regexp
+	offline_tile_tarball_resource['source']['regexp'] = tile_tarball_regexp
 	offline_tile_tarball_resource['name'] = '%s-%s' % (resource['name'], 'tarball')
 
 	offline_pipeline['resources'].append(offline_tile_tarball_resource)
