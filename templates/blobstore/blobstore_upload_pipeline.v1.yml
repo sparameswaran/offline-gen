@@ -427,13 +427,8 @@ resources:
   type: {{ resource['type'] }}
   {% endif %}
   {% endfor %}
-  {% for resource in final_output_resources %}
-- name: {{ resource['name'] }}
-  source:
-    access_key_id: ((s3_access_key_id))
-    bucket: ((s3_bucket))
-    endpoint: ((s3_endpoint))
-    secret_access_key: ((s3_secret_access_key))
-    regexp: {{ resource['regexp'] }}
+  {% for output_resource in final_output_resources %}
+- name: {{ output_resource['name'] }}
+  source: {{ output_resource['source'] }}
   type: s3
   {% endfor %}
