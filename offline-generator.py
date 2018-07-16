@@ -547,29 +547,17 @@ def handle_offline_tasks():
 		ref_map_target_job_name = None
 
 		for job_tasks_reference in job_tasks_references:
-
 			ref_map_target_job_name = job_tasks_reference.keys()[0]
-			for job_inner_task in job_tasks_reference[ref_map_target_job_name]:
-
-				target_task_name = job_inner_task.get('task')
-				target_task_file = job_inner_task.get('file')
-
-				if offline_job['name'] == ref_map_target_job_name:
-					found_job_tasks_reference = True
-					break
-
-			if found_job_tasks_reference == True:
+			if offline_job['name'] == ref_map_target_job_name:
+				found_job_tasks_reference = True
 				break
 
 		plan_index = 0
 		saved_plan_inputs = []
 
 		for plan in offline_job['plan']:
-			#print '## Offline job: {}, job_tasks_reference: {}, task: {}, task file: {}, set of keys inside plan: {} and type: {}\n\n\n'.format(
-										# offline_job['name'],
-										# job_tasks_reference,
-										# target_task_name,
-										# target_task_file, plan.keys(), type(plan))
+			#print '## Offline job: {}, job_tasks_reference: {}, set of keys inside plan: {} and type: {}\n\n\n'.format(
+											# offline_job['name'], job_tasks_reference, plan.keys(), type(plan))
 
 			non_resource_related_entry_map = {}
 			last_saved_plan_entry_map = {}
@@ -990,7 +978,9 @@ def create_full_run_command(dependent_resources_map, ignore_resource, task_scrip
 
 	run_command_str = ''
 	run_command_str_list = list(run_command_str)
-	run_command_str_list.append('ls -lR; find . -name version -exec ls -al {} \; find . -name url -exec ls -al {} \;')
+	run_command_str_list.append('find . -name "version" -exec rm {} \; ;')
+	run_command_str_list.append('find . -name "url" -exec rm {} \; ;')
+	run_command_str_list.append('ls -lR;')
 	for resource in dependent_resources_map.keys():
 		if ignore_resource is None or (ignore_resource['name'] not in resource):
 			run_command_str_list.append('cd %s; tar -zxf ../%s-tarball/*.tgz; cd ..;'
