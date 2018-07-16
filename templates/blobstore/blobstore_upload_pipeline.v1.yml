@@ -112,7 +112,6 @@ jobs:
         - {name: input-{{ resource['base_type'] }}-{{ resource['name'] }} }
         outputs:
         - {name: output-{{ resource['base_type'] }}-{{ resource['name'] }} }
-        - {name: output-stemcell-{{ resource['name'] }} }
         - {name: output-tile-stemcell-{{ resource['name'] }} }
         params: {IAAS: ((iaas)), PIVNET_API_TOKEN: ((pivnet_token))}
         platform: linux
@@ -152,9 +151,8 @@ jobs:
                     ./input-{{ resource['base_type'] }}-{{ resource['name'] }}/*.pivotal $SC_FILE_PATH
 
               mv $TILE_FILE_PATH output-{{ resource['base_type'] }}-{{ resource['name'] }}
-              mv $SC_FILE_PATH output-stemcell-{{ resource['name'] }}/
 
-              ls -l output-{{ resource['base_type'] }}-{{ resource['name'] }}/ output-stemcell-{{ resource['name'] }}/ output-tile-stemcell-{{ resource['name'] }}/
+              ls -l output-{{ resource['base_type'] }}-{{ resource['name'] }}/ output-tile-stemcell-{{ resource['name'] }}/
           path: /bin/bash
       task: prepare-{{ resource['base_type'] }}-{{ resource['name'] }}-bits-to-export
     {% else %}
@@ -192,36 +190,31 @@ jobs:
     {% endfor %}
   {% endfor %}
 
-  #- aggregate:
-  {% for resource in resources %}
-  - put: output-{{ resource['base_type'] }}-{{resource['name']}}
+  - aggregate:
+    {% for resource in resources %}
+    - put: output-{{ resource['base_type'] }}-{{resource['name']}}
 
-    {% if resource['base_type'] == 'docker' %}
-    params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}*.tgz }
+      {% if resource['base_type'] == 'docker' %}
+      params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}*.tgz }
 
-    {% elif resource['base_type'] == 'git' %}
+      {% elif resource['base_type'] == 'git' %}
 
-    params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-tarball.tgz }
+      params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-tarball.tgz }
 
-  # - put: output-docker-images-{{ resource['name'] }}
-  #   params: { file: output-docker-images-{{ resource['name'] }}/{{ resource['name'] }}-docker-tarball.tar }
+      {% elif resource['base_type'] == 'tile' %}
 
-    {% elif resource['base_type'] == 'tile' %}
+      params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/*.pivotal }
+    - put: output-tile-stemcell-{{ resource['name'] }}
+      params: { file: output-tile-stemcell-{{ resource['name'] }}/{{ resource['name'] }}-*.tgz }
 
-    params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/*.pivotal }
-  - put: output-stemcell-{{ resource['name'] }}
-    params: { file: output-stemcell-{{ resource['name'] }}/bosh-*.tgz }
-  - put: output-tile-stemcell-{{ resource['name'] }}
-    params: { file: output-tile-stemcell-{{ resource['name'] }}/{{ resource['name'] }}-*.tgz }
+      {% elif resource['base_type'] == 'pivnet-non-tile' %}
+      params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-{{ resource['base_type'] }}-* }
 
-    {% elif resource['base_type'] == 'pivnet-non-tile' %}
-    params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-{{ resource['base_type'] }}-* }
+      {% else %}
+      params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}*-1.0* }
 
-    {% else %}
-    params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}*-1.0* }
-
-    {% endif %}
-  {% endfor %}
+      {% endif %}
+    {% endfor %}
 
 
 # Individual Job Kickoffs
@@ -321,7 +314,6 @@ jobs:
       - {name: input-{{ resource['base_type'] }}-{{ resource['name'] }} }
       outputs:
       - {name: output-{{ resource['base_type'] }}-{{ resource['name'] }} }
-      - {name: output-stemcell-{{ resource['name'] }} }
       - {name: output-tile-stemcell-{{ resource['name'] }} }
       params: {IAAS: ((iaas)), PIVNET_API_TOKEN: ((pivnet_token))}
       platform: linux
@@ -359,9 +351,8 @@ jobs:
             tar cfz output-tile-stemcell-{{ resource['name'] }}/{{ resource['name'] }}-tarball.tgz \
                     ./input-{{ resource['base_type'] }}-{{ resource['name'] }}/*.pivotal $SC_FILE_PATH
             mv $TILE_FILE_PATH output-{{ resource['base_type'] }}-{{ resource['name'] }}
-            mv $SC_FILE_PATH output-stemcell-{{ resource['name'] }}/
 
-            ls -l output-{{ resource['base_type'] }}-{{ resource['name'] }}/ output-stemcell-{{ resource['name'] }}/ output-tile-stemcell-{{ resource['name'] }}/
+            ls -l output-{{ resource['base_type'] }}-{{ resource['name'] }}/ output-tile-stemcell-{{ resource['name'] }}/
 
         path: /bin/bash
     task: prepare-{{ resource['base_type'] }}-{{ resource['name'] }}-bits-to-export
@@ -402,9 +393,6 @@ jobs:
     params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-tarball.tgz }
     {% elif resource['base_type'] == 'tile' %}
     params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/*.pivotal }
-
-  - put: output-stemcell-{{ resource['name'] }}
-    params: { file: output-stemcell-{{ resource['name'] }}/bosh-*.tgz }
 
   - put: output-tile-stemcell-{{ resource['name'] }}
     params: { file: output-tile-stemcell-{{ resource['name'] }}/{{ resource['name'] }}-*.tgz }

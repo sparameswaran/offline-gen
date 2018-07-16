@@ -980,6 +980,10 @@ def create_full_run_command(dependent_resources_map, ignore_resource, task_scrip
 	run_command_str_list = list(run_command_str)
 	run_command_str_list.append('find . -name "version" -exec rm {} \; ;')
 	run_command_str_list.append('find . -name "url" -exec rm {} \; ;')
+	run_command_str_list.append('for file in $(find . -name "*-1.0");')
+	run_command_str_list.append('do new_file=$(echo $file | sed -e \'s/-1.0$//g\');')
+	run_command_str_list.append('mv ${file} ${new_file};')
+	run_command_str_list.append('done;')
 	run_command_str_list.append('ls -lR;')
 	for resource in dependent_resources_map.keys():
 		if ignore_resource is None or (ignore_resource['name'] not in resource):
