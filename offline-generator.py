@@ -1138,22 +1138,22 @@ def handle_pivnet_tile_resource(resource):
 
 	# Register the stemcell also
 	stemcell_regexp = '%s/%s/pivnet-tile/%s-stemcell/bosh-(.*).tgz' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'])
-	output_stemcell_resource = copy.copy(resource)
+	output_stemcell_resource = { 'type': 's3' , 'source': default_bucket_config }
 	output_stemcell_resource['name'] = 'output-%s-%s' % ('stemcell', resource['name'])
-	output_stemcell_resource['regexp'] = stemcell_regexp
+	output_stemcell_resource['source']['regexp'] = stemcell_regexp
 	final_output_resources.append(output_stemcell_resource)
 
 	combined_tile_stemcell_regexp = '%s/%s/pivnet-tile/%s-tarball/%s-(.*).tgz' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'], resource['name'])
-	output_tile_stemcell_resource = copy.copy(resource)
+	output_tile_stemcell_resource = { 'type': 's3' , 'source': default_bucket_config }
 	output_tile_stemcell_resource['name'] = 'output-%s-%s' % ('tile-stemcell', resource['name'])
-	output_tile_stemcell_resource['regexp'] = combined_tile_stemcell_regexp
+	output_tile_stemcell_resource['source']['regexp'] = combined_tile_stemcell_regexp
 	final_output_resources.append(output_tile_stemcell_resource)
 
-	offline_stemcell_resource = { 'name' : resource['name'] , 'type': 's3' , 'source': default_bucket_config }
-	offline_stemcell_resource['source']['regexp'] = stemcell_regexp
-	offline_stemcell_resource['name'] = '%s-%s' % (resource['name'], 'stemcell')
-
-	offline_pipeline['resources'].append(offline_stemcell_resource)
+	# offline_stemcell_resource = { 'name' : resource['name'] , 'type': 's3' , 'source': default_bucket_config }
+	# offline_stemcell_resource['source']['regexp'] = stemcell_regexp
+	# offline_stemcell_resource['name'] = '%s-%s' % (resource['name'], 'stemcell')
+	#
+	# offline_pipeline['resources'].append(offline_stemcell_resource)
 
 	tile_tarball_regexp = '%s/%s/pivnet-tile/%s-tarball/(.*).tgz' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'])
 	offline_tile_tarball_resource = { 'name' : '%s-tarball' % resource['name'] , 'type': 's3' , 'source': default_bucket_config }
