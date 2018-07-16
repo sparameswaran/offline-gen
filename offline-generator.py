@@ -43,10 +43,12 @@ default_bucket_config =  {}
 CONFIG_FILE = 'input.yml'
 DEFAULT_VERSION = '1.0'
 
+DEFAULT_RESOURCES_PATH = 'resources'
+
 input_config_file = None
 offline_pipeline = None
 src_pipeline = None
-
+RUN_NAME = None
 process_resource_jobs = []
 final_input_resources = []
 final_output_resources = []
@@ -73,7 +75,7 @@ def init():
 	return parser.parse_args()
 
 def main():
-	global repo, pipeline, params, default_bucket_config, github_raw_content
+	global repo, pipeline, params, default_bucket_config, github_raw_content, RUN_NAME
 
 	args = init()
 	input_config_file = args.input_yml if args.input_yml is not None else CONFIG_FILE
@@ -88,6 +90,8 @@ def main():
 	params = handler_config['params']
 	default_bucket_config = handler_config['s3_blobstore']
 
+	RUN_NAME = handler_config['run_name'] if handler_config.get('run_name') is not None else 'Run1'
+
 	github_raw_content = handler_config.get('github_raw_content')
 	if github_raw_content is None:
 		github_raw_content = DEFAULT_GITHUB_RAW_CONTENT
@@ -98,7 +102,7 @@ def create_offline_repo_converter_as_resource():
 	offline_gen_resource = { 'name': 'offline-gen-repo-converter'}
 	offline_gen_resource['type'] = 's3'
 	offline_gen_resource['source'] = copy.copy(default_bucket_config)
-	offline_gen_resource['source']['regexp'] = '%s/%s.(.*)' % ( 'resources', 'offline-gen/utils/python/pipeline_repo_converter')
+	offline_gen_resource['source']['regexp'] = '%s/%s/%s.(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, 'offline-gen/utils/python/pipeline_repo_converter')
 
 	return offline_gen_resource
 
@@ -106,7 +110,7 @@ def create_offline_stemcell_downloader_as_resource():
 	offline_gen_resource = { 'name': 'offline-gen-stemcell-downloader'}
 	offline_gen_resource['type'] = 's3'
 	offline_gen_resource['source'] = copy.copy(default_bucket_config)
-	offline_gen_resource['source']['regexp'] = '%s/%s(.*).sh' % ( 'resources', 'offline-gen/utils/shell/find_and_download')
+	offline_gen_resource['source']['regexp'] = '%s/%s/%s(.*).sh' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, 'offline-gen/utils/shell/find_and_download')
 
 	return offline_gen_resource
 
@@ -538,7 +542,12 @@ def handle_offline_tasks():
 	for offline_job in offline_pipeline['jobs']:
 
 		found_job_tasks_reference = False
+		target_task_name = None
+		target_task_file = None
+		ref_map_target_job_name = None
+
 		for job_tasks_reference in job_tasks_references:
+
 			ref_map_target_job_name = job_tasks_reference.keys()[0]
 			for job_inner_task in job_tasks_reference[ref_map_target_job_name]:
 
@@ -549,11 +558,18 @@ def handle_offline_tasks():
 					found_job_tasks_reference = True
 					break
 
+			if found_job_tasks_reference == True:
+				break
+
 		plan_index = 0
 		saved_plan_inputs = []
 
 		for plan in offline_job['plan']:
-			#print '## Current job: {}, set of keys inside plan: {} and type: {}\n\n\n'.format(ref_map_target_job_name, plan.keys(), type(plan))
+			#print '## Offline job: {}, job_tasks_reference: {}, task: {}, task file: {}, set of keys inside plan: {} and type: {}\n\n\n'.format(
+										# offline_job['name'],
+										# job_tasks_reference,
+										# target_task_name,
+										# target_task_file, plan.keys(), type(plan))
 
 			non_resource_related_entry_map = {}
 			last_saved_plan_entry_map = {}
@@ -590,7 +606,7 @@ def handle_offline_tasks():
 								(entry_key, entry_value), = nested_plan_entry.items()
 								if entry_key == 'get' and entry_value not in saved_plan_inputs:
 									saved_plan_inputs.append(entry_value)
-
+							#print 'Saved Plan Inputs: {}'.format(saved_plan_inputs)
 						plan.pop('get', None)
 				else:
 					# Just save the entry as is (we are only worried abt tasks and gets that need modification)
@@ -600,6 +616,7 @@ def handle_offline_tasks():
 			# Pop off any image references from the plan
 			# We want to purely go with image_resource and not image
 			plan.pop('image', None)
+			#print 'Finally modified Plan: {}'.format(plan)
 
 			plan_index += 1
 	print 'Finished handling of all jobs in offline pipeline'
@@ -694,6 +711,9 @@ def handle_get_resource_details(get_resource_name, job_tasks_reference):
 
 		resource_id = get_resource_name
 		job_name = job_tasks_reference.keys()[0]
+
+		# print 'COMPLETE JOB TASKS REFERENCE: {} , JOB NAME ***** :{} before \
+		# 	adding docker reference'.format(job_tasks_reference.keys(), job_name)
 
 		# Sample job_tasks_ref
 		# {'standalone-install-nsx-t': [{'file': 'nsx-t-gen-pipeline/tasks/install-nsx-t/task.yml',
@@ -970,10 +990,10 @@ def create_full_run_command(dependent_resources_map, ignore_resource, task_scrip
 
 	run_command_str = ''
 	run_command_str_list = list(run_command_str)
-	run_command_str_list.append('ls -lR;')
+	run_command_str_list.append('ls -lR; find . -name version -exec ls -al {} \; find . -name url -exec ls -al {} \;')
 	for resource in dependent_resources_map.keys():
 		if ignore_resource is None or (ignore_resource['name'] not in resource):
-			run_command_str_list.append('cd %s; tar -zxf ../%s-tarball/*; cd ..;'
+			run_command_str_list.append('cd %s; tar -zxf ../%s-tarball/*.tgz; cd ..;'
 					% (resource, dependent_resources_map[resource]))
 
 	run_command_str_list.append('echo Starting main task execution!!;')
@@ -1020,7 +1040,13 @@ def handle_docker_image(resource):
 		tag = 'latest'
 
 	resource['tag'] = tag
-	resource['regexp'] = '%s/docker/%s-%s-docker.(.*)' % ( 'resources', resource['name'], tag)
+	tagged_docker = '%s-docker' % tag
+
+	# If the tag + 'docker' is already in the resource name, dont add it again
+	if tagged_docker in resource['name']:
+		resource['regexp'] = '%s/%s/docker/%s.(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'])
+	else:
+		resource['regexp'] = '%s/%s/docker/%s-%s-docker.(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'], tag)
 
 	context = {}
 	resource_context = {
@@ -1042,7 +1068,7 @@ def handle_git_resource(resource, src_pipeline, task_list):
 
 	res_name = resource['name']
 	resource['base_type'] = 'git'
-	resource['regexp'] = '%s/%s/%s-(.*).tgz' % ( 'resources', 'git', resource['name'])
+	resource['regexp'] = '%s/%s/%s/%s-(.*).tgz' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, 'git', resource['name'])
 
 	matching_task_files = []
 	for task_file in task_list:
@@ -1093,7 +1119,7 @@ def handle_git_resource(resource, src_pipeline, task_list):
 def handle_pivnet_tile_resource(resource):
 
 	resource['base_type'] = 'tile'
-	resource['regexp'] = '%s/pivnet-tile/%s/(.*).pivotal' % ( 'resources', resource['name'])
+	resource['regexp'] = '%s/%s/pivnet-tile/%s/(.*).pivotal' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'])
 
 	context = {}
 	resource_context = {
@@ -1111,13 +1137,13 @@ def handle_pivnet_tile_resource(resource):
 	add_inout_resources(resource)
 
 	# Register the stemcell also
-	stemcell_regexp = '%s/pivnet-tile/%s-stemcell/bosh-(.*).tgz' % ( 'resources', resource['name'])
+	stemcell_regexp = '%s/%s/pivnet-tile/%s-stemcell/bosh-(.*).tgz' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'])
 	output_stemcell_resource = copy.copy(resource)
 	output_stemcell_resource['name'] = 'output-%s-%s' % ('stemcell', resource['name'])
 	output_stemcell_resource['regexp'] = stemcell_regexp
 	final_output_resources.append(output_stemcell_resource)
 
-	combined_tile_stemcell_regexp = '%s/pivnet-tile/%s-tarball/%s-(.*).tgz' % ( 'resources', resource['name'], resource['name'])
+	combined_tile_stemcell_regexp = '%s/%s/pivnet-tile/%s-tarball/%s-(.*).tgz' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'], resource['name'])
 	output_tile_stemcell_resource = copy.copy(resource)
 	output_tile_stemcell_resource['name'] = 'output-%s-%s' % ('tile-stemcell', resource['name'])
 	output_tile_stemcell_resource['regexp'] = combined_tile_stemcell_regexp
@@ -1129,7 +1155,7 @@ def handle_pivnet_tile_resource(resource):
 
 	offline_pipeline['resources'].append(offline_stemcell_resource)
 
-	tile_tarball_regexp = '%s/pivnet-tile/%s-tarball/(.*).tgz' % ( 'resources', resource['name'])
+	tile_tarball_regexp = '%s/%s/pivnet-tile/%s-tarball/(.*).tgz' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'])
 	offline_tile_tarball_resource = { 'name' : '%s-tarball' % resource['name'] , 'type': 's3' , 'source': default_bucket_config }
 	offline_tile_tarball_resource['source']['regexp'] = tile_tarball_regexp
 	offline_tile_tarball_resource['name'] = '%s-%s' % (resource['name'], 'tarball')
@@ -1141,7 +1167,7 @@ def handle_pivnet_tile_resource(resource):
 def handle_pivnet_non_tile_resource(resource):
 
 	resource['base_type'] = 'pivnet-non-tile'
-	resource['regexp'] = '%s/pivnet-non-tile/%s-(.*)' % ( 'resources', resource['name'])
+	resource['regexp'] = '%s/%s/pivnet-non-tile/%s-(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'])
 
 	context = {}
 	resource_context = {
@@ -1179,7 +1205,7 @@ def handle_s3_resource(resource):
 
 	# Requires modification
 	resource['base_type'] = 's3'
-	resource['regexp'] = '%s/s3/%s-(.*)' % ( 'resources', resource['name'])
+	resource['regexp'] = '%s/%s/s3/%s-(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'])
 
 	context = {}
 	resource_context = {
@@ -1202,7 +1228,7 @@ def handle_s3_resource(resource):
 def handle_default_resource(resource):
 
 	resource['base_type'] = 'file'
-	resource['regexp'] = '%s/file/%s-*-(.*)' % ( 'resources', resource['name'])
+	resource['regexp'] = '%s/%s/file/%s-*-(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'])
 
 	context = {}
 	resource_context = {

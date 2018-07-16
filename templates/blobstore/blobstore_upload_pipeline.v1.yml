@@ -192,36 +192,36 @@ jobs:
     {% endfor %}
   {% endfor %}
 
-  - aggregate:
-    {% for resource in resources %}
-    - put: output-{{ resource['base_type'] }}-{{resource['name']}}
+  #- aggregate:
+  {% for resource in resources %}
+  - put: output-{{ resource['base_type'] }}-{{resource['name']}}
 
-      {% if resource['base_type'] == 'docker' %}
-      params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}*.tgz }
+    {% if resource['base_type'] == 'docker' %}
+    params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}*.tgz }
 
-      {% elif resource['base_type'] == 'git' %}
+    {% elif resource['base_type'] == 'git' %}
 
-      params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-tarball.tgz }
+    params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-tarball.tgz }
 
-    # - put: output-docker-images-{{ resource['name'] }}
-    #   params: { file: output-docker-images-{{ resource['name'] }}/{{ resource['name'] }}-docker-tarball.tar }
+  # - put: output-docker-images-{{ resource['name'] }}
+  #   params: { file: output-docker-images-{{ resource['name'] }}/{{ resource['name'] }}-docker-tarball.tar }
 
-      {% elif resource['base_type'] == 'tile' %}
+    {% elif resource['base_type'] == 'tile' %}
 
-      params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/*.pivotal }
-    - put: output-stemcell-{{ resource['name'] }}
-      params: { file: output-stemcell-{{ resource['name'] }}/bosh-*.tgz }
-    - put: output-tile-stemcell-{{ resource['name'] }}
-      params: { file: output-tile-stemcell-{{ resource['name'] }}/{{ resource['name'] }}-*.tgz }
+    params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/*.pivotal }
+  - put: output-stemcell-{{ resource['name'] }}
+    params: { file: output-stemcell-{{ resource['name'] }}/bosh-*.tgz }
+  - put: output-tile-stemcell-{{ resource['name'] }}
+    params: { file: output-tile-stemcell-{{ resource['name'] }}/{{ resource['name'] }}-*.tgz }
 
-      {% elif resource['base_type'] == 'pivnet-non-tile' %}
-      params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-{{ resource['base_type'] }}-* }
+    {% elif resource['base_type'] == 'pivnet-non-tile' %}
+    params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-{{ resource['base_type'] }}-* }
 
-      {% else %}
-      params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}*-1.0* }
+    {% else %}
+    params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}*-1.0* }
 
-      {% endif %}
-    {% endfor %}
+    {% endif %}
+  {% endfor %}
 
 
 # Individual Job Kickoffs
