@@ -194,9 +194,13 @@ def save_kickoff_pipeline(git_input_resources, git_only_pipeline_filename):
 	blobstore_upload_pipeline_source = copy.copy(default_bucket_config)
 	offline_pipeline_source = copy.copy(default_bucket_config)
 
-	offlinegen_param_file_source['regexp'] = '%s/%s/offline-gen/offline-gen-params-*(.*).yml' % ( RUN_NAME, DEFAULT_RESOURCES_PATH)
-	pipeline_param_file_source['regexp'] = '%s/%s/offline-gen/pipeline-params-*(.*).yml' % ( RUN_NAME, DEFAULT_RESOURCES_PATH)
-	analysis_results_filesource['regexp'] = '%s/%s/offline-gen/analysis-*(.*).yml' % ( RUN_NAME, DEFAULT_RESOURCES_PATH)
+	OFFLINE_GEN_RESOURCE_BASE_PATH             = '%s/%s/%s' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, 'offline-gen')
+	offlinegen_param_file_source['regexp']     = '%s/offline-gen-params-*(.*).yml' % ( OFFLINE_GEN_RESOURCE_BASE_PATH)
+	pipeline_param_file_source['regexp']       = '%s/pipeline-params-*(.*).yml' % ( OFFLINE_GEN_RESOURCE_BASE_PATH)
+	analysis_results_filesource['regexp']      = '%s/analysis-*(.*).yml' % ( OFFLINE_GEN_RESOURCE_BASE_PATH)
+	offline_pipeline_source['regexp']          = '%s/offline-*(.*).yml' % ( OFFLINE_GEN_RESOURCE_BASE_PATH)
+	blobstore_upload_pipeline_source['regexp'] = '%s/blobstore-upload-*(.*).yml' % ( OFFLINE_GEN_RESOURCE_BASE_PATH)
+
 	try:
 		context = {}
 		resource_context = {
