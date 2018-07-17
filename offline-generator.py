@@ -736,11 +736,11 @@ def handle_get_resource_details(get_resource_name, job_tasks_reference):
 		# Special handling for Pivnet Tiles
 		new_nested_plan_entries.append( { 'get' :  get_resource_name } )
 
-		# Check for stemcells associated with the tile
-		matching_stemcell_resource = None
-		matching_stemcell_resource = offline_resource_map.get(get_resource_name + '-stemcell')
-		if matching_stemcell_resource is not None:
-			new_nested_plan_entries.append( { 'get' :  matching_stemcell_resource['name'] } )
+		# # Check for stemcells associated with the tile
+		# matching_stemcell_resource = None
+		# matching_stemcell_resource = offline_resource_map.get(get_resource_name + '-stemcell')
+		# if matching_stemcell_resource is not None:
+		# 	new_nested_plan_entries.append( { 'get' :  matching_stemcell_resource['name'] } )
 
 		# Check for tarball associated with the tile
 		matching_tile_tarball_resource = None
@@ -984,7 +984,7 @@ def create_full_run_command(dependent_resources_map, ignore_resource, task_scrip
 	run_command_str_list.append('do new_file=$(echo $file | sed -e \'s/-1.0$//g\');')
 	run_command_str_list.append('mv ${file} ${new_file};')
 	run_command_str_list.append('done;')
-	run_command_str_list.append('ls -lR;')
+	run_command_str_list.append('ls -R;')
 	for resource in dependent_resources_map.keys():
 		if ignore_resource is None or (ignore_resource['name'] not in resource):
 			run_command_str_list.append('cd %s; tar -zxf ../%s-tarball/*.tgz; cd ..;'
@@ -1130,13 +1130,14 @@ def handle_pivnet_tile_resource(resource):
 	# Register the default in/out resources
 	add_inout_resources(resource)
 
-	# Register the stemcell also
-	stemcell_regexp = '%s/%s/pivnet-tile/%s-stemcell/bosh-(.*).tgz' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'])
-	output_stemcell_resource = { 'type': 's3' , 'source': default_bucket_config }
-	output_stemcell_resource['name'] = 'output-%s-%s' % ('stemcell', resource['name'])
-	output_stemcell_resource['source']['regexp'] = stemcell_regexp
-	final_output_resources.append(output_stemcell_resource)
 
+	# stemcell_regexp = '%s/%s/pivnet-tile/%s-stemcell/bosh-(.*).tgz' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'])
+	# output_stemcell_resource = { 'type': 's3' , 'source': default_bucket_config }
+	# output_stemcell_resource['name'] = 'output-%s-%s' % ('stemcell', resource['name'])
+	# output_stemcell_resource['source']['regexp'] = stemcell_regexp
+	# final_output_resources.append(output_stemcell_resource)
+
+	# Register the combined tile + stemcell also
 	combined_tile_stemcell_regexp = '%s/%s/pivnet-tile/%s-tarball/%s-(.*).tgz' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'], resource['name'])
 	output_tile_stemcell_resource = { 'type': 's3' , 'source': default_bucket_config }
 	output_tile_stemcell_resource['name'] = 'output-%s-%s' % ('tile-stemcell', resource['name'])
