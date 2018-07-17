@@ -76,9 +76,9 @@ def init():
 		help='path to the target pipeline git repo dir')
 	parser.add_argument('input_yml', type=str,
 		help='path to the input yml file')
-	parser.add_argument('-git',
+	parser.add_argument('-kickoff',
 		action='store_true',
-		help='handle git resource only')
+		help='kickoff offline-gen first phase')
 	parser.add_argument('-analyze',
 		action='store_true',
 		help='docker dependency analysis only of tasks in github resources')
@@ -94,8 +94,8 @@ def main():
 
 	# repo_path=args.repo
 	# pipeline = args.pipeline
-	git_only = args.git
 	analysis_only = args.analyze
+	kickoff_only = args.kickoff
 
 	handler_config = read_config(input_config_file)
 
@@ -113,8 +113,8 @@ def main():
 
 	analysis_output_file = 'analysis-' + target_pipeline_name
 
-	if git_only:
-		handle_git_only_pipelines()
+	if kickoff_only:
+		handle_kickoff_pipeline_generation()
 	elif analysis_only:
 		handle_docker_analysis_of_pipelines()
 	else:
@@ -158,7 +158,7 @@ def handle_docker_analysis_of_pipelines():
 	print 'Created docker image analysis of pipeline: ' + analysis_output_file
 	return docker_analysis_map
 
-def handle_git_only_pipelines():
+def handle_kickoff_pipeline_generation():
 	global src_pipeline
 
 	print('Repo Path:     {}\nPipeline file: {}'.format(repo, pipeline))
@@ -168,11 +168,11 @@ def handle_git_only_pipelines():
 	pipeline_name_tokens = pipeline.split('/')
 	target_pipeline_name = pipeline_name_tokens[len(pipeline_name_tokens) - 1]
 
-	git_only_pipeline_filename= 'build-git-repos-' + target_pipeline_name
+	git_only_pipeline_filename= 'kickoff-offline-gen-' + target_pipeline_name
 
 	try:
 		git_input_resources = handle_git_only_resources()
-		save_git_only_pipeline(	git_input_resources,
+		save_kickoff_pipeline(	git_input_resources,
 								git_only_pipeline_filename
 							)
 
@@ -184,32 +184,37 @@ def handle_git_only_pipelines():
 		print >> sys.stderr, 'Error occured.'
 		sys.exit(1)
 
-def save_git_only_pipeline(git_input_resources, git_only_pipeline_filename):
+def save_kickoff_pipeline(git_input_resources, git_only_pipeline_filename):
 
 	print 'Input git resources:{}'.format(git_input_resources)
 
 	offlinegen_param_file_source = copy.copy(default_bucket_config)
 	pipeline_param_file_source = copy.copy(default_bucket_config)
-	build_git_repos_source = copy.copy(default_bucket_config)
+	kickoff_offline_gen_source = copy.copy(default_bucket_config)
+	analysis_results_filesource = copy.copy(default_bucket_config)
+	blobstore_upload_pipeline_source = copy.copy(default_bucket_config)
+	offline_pipeline_source = copy.copy(default_bucket_config)
 
-	offlinegen_param_file_source['regexp'] = '%s/%s/offline-gen/input-param.(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH)
-	pipeline_param_file_source['regexp'] = '%s/%s/offline-gen/pipeline-param.(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH)
-	build_git_repos_source['regexp'] = '%s/%s/offline-gen/build-git-repos-*.(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH)
-
+	offlinegen_param_file_source['regexp'] = '%s/%s/offline-gen/offline-gen-params-*(.*).yml' % ( RUN_NAME, DEFAULT_RESOURCES_PATH)
+	pipeline_param_file_source['regexp'] = '%s/%s/offline-gen/pipeline-params-*(.*).yml' % ( RUN_NAME, DEFAULT_RESOURCES_PATH)
+	kickoff_offline_gen_source['regexp'] = '%s/%s/offline-gen/kickoff-*(.*).yml' % ( RUN_NAME, DEFAULT_RESOURCES_PATH)
+	analysis_results_filesource['regexp'] = = '%s/%s/offline-gen/analysis-*(.*).yml' % ( RUN_NAME, DEFAULT_RESOURCES_PATH)
 	try:
 		context = {}
 		resource_context = {
 	        'context': context,
 			'source_resource_types': [],
 	        #'process_resource_jobs': process_resource_jobs,
-			'offlinegen_param_file_source': offlinegen_param_file_source,
+			'offline_gen_param_file_source': offlinegen_param_file_source,
 			'pipeline_param_file_source': pipeline_param_file_source,
-			'input_resources': git_input_resources,
-			'git_repos_source': build_git_repos_source
+			'git_resources': git_input_resources,
+			'analysis_results_filesource': analysis_results_filesource,
+			'blobstore_upload_pipeline_source': blobstore_upload_pipeline_source,
+			'offline_pipeline_source': offline_pipeline_source
 	    }
 
 		git_only_pipeline = template.render_as_config(
-	        os.path.join('.', 'blobstore/parse_git_repos.v1.yml' ),
+	        os.path.join('.', 'blobstore/kickoff_offline_gen.v1.yml' ),
 	        resource_context
 	    )
 		write_config(git_only_pipeline, git_only_pipeline_filename)
@@ -221,6 +226,71 @@ def save_git_only_pipeline(git_input_resources, git_only_pipeline_filename):
 		print(traceback.format_exc())
 		print >> sys.stderr, 'Error occured.'
 		sys.exit(1)
+
+# def handle_git_only_pipeline_generation():
+# 	global src_pipeline
+#
+# 	print('Repo Path:     {}\nPipeline file: {}'.format(repo, pipeline))
+# 	src_pipeline = read_config(repo + '/' + pipeline )
+#
+# 	#print 'Got src pipeline: {}'.format(src_pipeline)
+# 	pipeline_name_tokens = pipeline.split('/')
+# 	target_pipeline_name = pipeline_name_tokens[len(pipeline_name_tokens) - 1]
+#
+# 	git_only_pipeline_filename= 'build-git-repos-' + target_pipeline_name
+#
+# 	try:
+# 		git_input_resources = handle_git_only_resources()
+# 		save_git_only_pipeline(	git_input_resources,
+# 								git_only_pipeline_filename
+# 							)
+#
+# 		print '\nFinished git_only pipeline generation!!\n\n'
+#
+# 	except Exception as e:
+# 		print('Error : {}'.format(e))
+# 		print(traceback.format_exc())
+# 		print >> sys.stderr, 'Error occured.'
+# 		sys.exit(1)
+#
+# def save_git_only_pipeline(git_input_resources, git_only_pipeline_filename):
+#
+# 	print 'Input git resources:{}'.format(git_input_resources)
+#
+# 	offlinegen_param_file_source = copy.copy(default_bucket_config)
+# 	pipeline_param_file_source = copy.copy(default_bucket_config)
+# 	build_git_repos_source = copy.copy(default_bucket_config)
+#
+# 	offlinegen_param_file_source['regexp'] = '%s/%s/offline-gen/offline-gen-params-*(.*).yml' % ( RUN_NAME, DEFAULT_RESOURCES_PATH)
+# 	pipeline_param_file_source['regexp'] = '%s/%s/offline-gen/pipeline-params-*(.*).yml' % ( RUN_NAME, DEFAULT_RESOURCES_PATH)
+# 	build_git_repos_source['regexp'] = '%s/%s/offline-gen/build-git-repos-*(.*).yml' % ( RUN_NAME, DEFAULT_RESOURCES_PATH)
+#
+# 	try:
+# 		context = {}
+# 		resource_context = {
+# 	        'context': context,
+# 			'source_resource_types': [],
+# 	        #'process_resource_jobs': process_resource_jobs,
+# 			'offlinegen_param_file_source': offlinegen_param_file_source,
+# 			'pipeline_param_file_source': pipeline_param_file_source,
+# 			'git_resources': git_input_resources,
+# 			'git_repos_source': build_git_repos_source
+# 	    }
+#
+# 		git_only_pipeline = template.render_as_config(
+# 	        os.path.join('.', 'blobstore/parse_git_repos.v1.yml' ),
+# 	        resource_context
+# 	    )
+# 		write_config(git_only_pipeline, git_only_pipeline_filename)
+#
+# 		print ''
+# 		print 'Created git only pipeline: ' + git_only_pipeline_filename
+# 	except Exception as e:
+# 		print('Error during git only pipeline generation : {}'.format(e))
+# 		print(traceback.format_exc())
+# 		print >> sys.stderr, 'Error occured.'
+# 		sys.exit(1)
+
 
 
 def handle_pipelines():
