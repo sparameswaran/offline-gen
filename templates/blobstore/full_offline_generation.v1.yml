@@ -29,8 +29,8 @@ jobs:
         args:
         - -exc
         - |
-            python offline-gen-pipeline/offline-generator.py -analyze target-pipeline offlinegen-param-file/offline-gen-params*.yml;
-            python offline-gen-pipeline/offline-generator.py target-pipeline offlinegen-param-file/offline-gen-params*.yml;
+            python offline-gen-pipeline/offline-generator.py -analyze target-pipeline offline-gen-param-file/offline-gen-params*.yml;
+            python offline-gen-pipeline/offline-generator.py target-pipeline offline-gen-param-file/offline-gen-params*.yml;
             mv analysis-*  blobstore-*yml offline-*yml offline-gen-output/
             cd offline-gen-output
             for file in $(ls *.yml)

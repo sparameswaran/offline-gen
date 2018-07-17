@@ -512,7 +512,7 @@ def load_github_resource(git_repo_id, git_remote_uri, task_file_path):
 		input_file = git_repo_id + '/' + task_file_path
 
 		with open(input_file) as task_file:
-			yamlcontent = yaml.safe_load(config_file)
+			yamlcontent = yaml.safe_load(input_file)
 			print 'Successful reading task as local file: {}\n'.format(input_file)
 			return yamlcontent
 	except IOError as e:
