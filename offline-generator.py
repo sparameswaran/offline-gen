@@ -168,7 +168,7 @@ def handle_kickoff_pipeline_generation():
 	pipeline_name_tokens = pipeline.split('/')
 	target_pipeline_name = pipeline_name_tokens[len(pipeline_name_tokens) - 1]
 
-	git_only_pipeline_filename= 'kickoff-offline-gen-' + target_pipeline_name
+	git_only_pipeline_filename= 'kickoff-full-offline-gen-' + target_pipeline_name
 
 	try:
 		git_input_resources = handle_git_only_resources()

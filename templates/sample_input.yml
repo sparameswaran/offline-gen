@@ -1,0 +1,37 @@
+# offline-gen-input-params
+
+# Default github path to pull down raw content
+github_raw_content: raw.githubusercontent.com # Github url to retreive raw content for any associated repos referred by the pipeline
+
+# Target pipeline details - EDIT ME
+target_pipeline_branch: master
+target_pipeline_uri: https://github.com/sparameswaran/nsx-t-gen
+pipeline: pipelines/nsx-t-install.yml   # Relative path to the target pipeline file from within the target pipeline repo
+repo: workspace/nsx-t-gen                    # Path to the target pipeline repo if its local
+
+# Run Id - EDIT ME
+run_name: test-run-1                         # Unique identifier to distinguish the run
+
+# Concourse Login/auth
+concourse_team: main
+concourse_password: concourse
+concourse_username: concourse
+
+# S3 blobstore details
+# Can be overridden by yet another params file when during fly -l <params-file>
+# Following is <param-name>: &alias <param-value>
+# EDIT the param-value section
+s3_endpoint: &my_s3_endpoint http://10.85.24.5:9000/                   # EDIT ME
+s3_bucket: &my_s3_bucket offline-bucket                                # EDIT ME
+s3_access_key_id: &my_s3_access_key_id my_access_id                    # EDIT ME
+s3_secret_access_key: &my_s3_secret_access_key my_secret_access_key    # EDIT ME
+
+# S3 blobstore - would use aliased values
+s3_blobstore:
+  endpoint: *my_s3_endpoint
+  bucket: *my_s3_bucket
+  access_key_id: *my_s3_access_key_id
+  secret_access_key: *my_s3_secret_access_key
+  #disable_ssl:
+  #skip_ssl_verification:
+  #use_v2_signing:

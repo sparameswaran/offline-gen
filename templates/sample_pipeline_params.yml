@@ -1,0 +1,5 @@
+s3_endpoint: http://10.85.24.5:9000/
+s3_bucket: offline-bucket
+s3_access_key_id: my_access_id
+s3_secret_access_key: my_secret_access_key
+iaas: vsphere

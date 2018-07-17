@@ -40,8 +40,26 @@ jobs:
       params: { file: offline-gen-output/offline-gen-params*.yml }
     - put: pipeline-param-file
       params: { file: offline-gen-output/pipeline-params*.yml }
-    - put: kickoff-offline-gen-output
+    - put: kickoff-offline-gen-output-pipeline
       params: { file: offline-gen-output/kickoff-*.yml }
+
+- name: start-full-generation
+  plan:
+  - aggregate:
+    - get: pipeline-param-file
+    - get: offline-gen-param-file
+    - get: kickoff-offline-gen-output-pipeline
+      trigger: true
+  - put: offline-gen-full-generation-pipeline
+    params:
+      #pipelines_file: path/to/pipelines/file
+      pipelines:
+      - name: start-full-generation-pipeline
+        team: main
+        config_file: kickoff-offline-gen-output-pipeline/*.yml
+        vars_files:
+        - offline-gen-param-file/*
+        - pipeline-param-file/*
 
 resource_types:
 - name: file-url
@@ -50,7 +68,22 @@ resource_types:
     repository: pivotalservices/concourse-curl-resource
     tag: latest
 
+- name: concourse-pipeline
+  type: docker-image
+  source:
+    repository: concourse/concourse-pipeline-resource
+
+
 resources:
+- name: offline-gen-full-generation-pipeline
+  type: concourse-pipeline
+  source:
+    teams:
+    - name: ((concourse_team))
+      username: ((concourse_username))
+      password: ((concourse_password))
+      insecure: "true"
+
 - name: offline-gen-pipeline
   type: git
   source:
@@ -81,7 +114,7 @@ resources:
     secret_access_key: ((s3_secret_access_key))
     regexp: ((run_name))/resources/offline-gen/pipeline-params-*(.*).yml
 
-- name: kickoff-offline-gen-output
+- name: kickoff-offline-gen-output-pipeline
   type: s3
   source:
     access_key_id: ((s3_access_key_id))
