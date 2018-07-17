@@ -37,10 +37,9 @@ from utils import *
 
 repo = '.'
 pipeline = None
-params = None
-analysis_output_file = None
 handler_config = None
 default_bucket_config =  {}
+analysis_output_file = None
 
 CONFIG_FILE = 'input.yml'
 DEFAULT_VERSION = '1.0'
@@ -102,7 +101,6 @@ def main():
 
 	repo = args.target_pipeline if args.target_pipeline is not None else handler_config['repo']
 	pipeline = handler_config['pipeline']
-	params = handler_config['params']
 	default_bucket_config = handler_config['s3_blobstore']
 	pipeline_name_tokens = pipeline.split('/')
 	target_pipeline_name = pipeline_name_tokens[len(pipeline_name_tokens) - 1]
@@ -192,9 +190,11 @@ def save_git_only_pipeline(git_input_resources, git_only_pipeline_filename):
 
 	offlinegen_param_file_source = copy.copy(default_bucket_config)
 	pipeline_param_file_source = copy.copy(default_bucket_config)
+	build_git_repos_source = copy.copy(default_bucket_config)
 
 	offlinegen_param_file_source['regexp'] = '%s/%s/offline-gen/input-param.(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH)
 	pipeline_param_file_source['regexp'] = '%s/%s/offline-gen/pipeline-param.(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH)
+	build_git_repos_source['regexp'] = '%s/%s/offline-gen/build-git-repos-*.(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH)
 
 	try:
 		context = {}
@@ -204,7 +204,8 @@ def save_git_only_pipeline(git_input_resources, git_only_pipeline_filename):
 	        #'process_resource_jobs': process_resource_jobs,
 			'offlinegen_param_file_source': offlinegen_param_file_source,
 			'pipeline_param_file_source': pipeline_param_file_source,
-			'input_resources': git_input_resources
+			'input_resources': git_input_resources,
+			'git_repos_source': build_git_repos_source
 	    }
 
 		git_only_pipeline = template.render_as_config(

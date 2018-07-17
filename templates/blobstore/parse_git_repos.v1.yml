@@ -20,21 +20,22 @@ jobs:
         args:
         - -exc
         - |
-            echo ${OFFLINE_GEN_YAML_PARAM} > offline-gen-output/offline-gen-param-file.yml
-            python offline-gen.py -git target-pipeline offline-gen-output/offline-gen-param-file.yml;
-            mv git-only-*.yml offline-gen-output/
+            echo ${OFFLINE_GEN_YAML_PARAM} > offline-gen-output/offline-gen-params.yml
+            echo ${PIPELINE_YAML_PARAM} > offline-gen-output/pipeline-params.yml
+            python offline-gen-pipeline/offline-generator.py -git target-pipeline offline-gen-output/offline-gen-params.yml;
+            mv build-git-repos-*.yml offline-gen-output/
         path: /bin/bash
     task: build-git-repos-from-pipeline
     params:
-      OFFLINE_GEN_YAML_PARAM: ((offline_gen_yaml_input_params ))
-      PIPELINE_YAML_PARAM: ((pipeline_yaml_input_params ))
+      OFFLINE_GEN_YAML_PARAM: ((offline_gen_yaml_input_params))
+      PIPELINE_YAML_PARAM: ((pipeline_yaml_input_params))
   - aggregate:
-    - put: git-repos-output
-      params: { file: offline-gen-output/git-only-*.yml }
     - put: offline-gen-param-file
       params: { file: offline-gen-output/offline-gen-params.yml }
     - put: pipeline-param-file
       params: { file: offline-gen-output/pipeline-params.yml }
+    - put: git-repos-output
+      params: { file: offline-gen-output/build-git-repos-*.yml }
 
 resource_types:
 - name: file-url
@@ -63,3 +64,7 @@ resources:
 - name: pipeline-param-file
   type: s3
   source: {{ pipeline_param_file_source }}
+
+- name: git-repos-output
+  source: {{ git_repos_source }}
+  type: s3
