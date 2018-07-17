@@ -1,0 +1,83 @@
+
+jobs:
+- name: offline-gen-analyze-git-repos
+  plan:
+  - aggregate:
+    {% for resource in input_resources %}
+    - get: {{resource['name']}}
+    {% endfor %}
+
+  - config:
+      image_resource:
+        source: {repository: nsxedgegen/offline-gen-worker}
+        type: docker-image
+      inputs:
+      - name: offline-gen-pipeline
+      - name: target-pipeline-file
+      - name: offlinegen-param-file
+      - name: pipeline-param-file
+      {% for resource in input_resources %}
+      - {name: {{ resource['name'] }} }
+      {% endfor %}
+      outputs:
+      - name: analysis-output
+      platform: linux
+      run:
+        args:
+        - -exc
+        - |
+            python offline-gen.py -analyze offlinegen-param-file/*.yml;
+            mv analysis-*.yml analysis-output/
+        path: /bin/bash
+    task: analyze-docker-dependency-of-pipeline-tasks
+
+  - aggregate:
+    {% for resource in output_resources %}
+    - put: output-{{ resource['base_type'] }}-{{resource['name']}}
+
+      params: { file: output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}*-1.0* }
+    {% endfor %}
+
+
+resource_types:
+- name: file-url
+  type: docker-image
+  source:
+    repository: pivotalservices/concourse-curl-resource
+    tag: latest
+
+resources:
+- name: offline-gen-pipeline
+  type: git
+  source:
+    branch: master
+    uri: https://github.com/sparameswaran/offline-gen.git
+
+- name: {{target_pipeline['name']}}
+  type: file-url
+  source:
+    url: {{target_pipeline['url']}}
+    filename: {{target_pipeline['filename']}}
+    skip_ssl_verification: true
+    #username: username
+    #password: password
+
+- name: offlinegen-param-file
+  type: s3
+  source: {{ offlinegen_param_file_source }}
+
+- name: pipeline-param-file
+  type: s3
+  source: {{ pipeline_param_file_source }}
+
+  {% for resource in input_resources %}
+- name: {{ resource['name'] }}
+  source: {{ resource['source'] }}
+  type: git
+  {% endfor %}
+
+  {% for output_resource in output_resources %}
+- name: {{ output_resource['name'] }}
+  source: {{ output_resource['source'] }}
+  type: s3
+  {% endfor %}

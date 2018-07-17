@@ -38,6 +38,8 @@ from utils import *
 repo = '.'
 pipeline = None
 params = None
+analysis_output_file = None
+handler_config = None
 default_bucket_config =  {}
 
 CONFIG_FILE = 'input.yml'
@@ -49,6 +51,7 @@ input_config_file = None
 offline_pipeline = None
 src_pipeline = None
 RUN_NAME = None
+param_file = None
 process_resource_jobs = []
 final_input_resources = []
 final_output_resources = []
@@ -70,25 +73,39 @@ def init():
 	#         help='path to the execution pipeline')
 	# parser.add_argument('params', type=str,
 	#         help='path to the params file for the pipeline')
+	parser.add_argument('target_pipeline', type=str,
+		help='path to the target pipeline git repo dir')
 	parser.add_argument('input_yml', type=str,
 		help='path to the input yml file')
+	parser.add_argument('-git',
+		action='store_true',
+		help='handle git resource only')
+	parser.add_argument('-analyze',
+		action='store_true',
+		help='docker dependency analysis only of tasks in github resources')
 	return parser.parse_args()
 
 def main():
-	global repo, pipeline, params, default_bucket_config, github_raw_content, RUN_NAME
+	global repo, handler_config, input_config_file, pipeline, params, default_bucket_config, github_raw_content, analysis_output_file, RUN_NAME
 
 	args = init()
 	input_config_file = args.input_yml if args.input_yml is not None else CONFIG_FILE
-	# repo_path=args.repo
-	# pipeline = args.pipeline
-
+	#print ' Git is True?? :{}'.format(args.git)
 	print 'General Settings from: {}\n'.format(input_config_file)
 
+	# repo_path=args.repo
+	# pipeline = args.pipeline
+	git_only = args.git
+	analysis_only = args.analyze
+
 	handler_config = read_config(input_config_file)
-	repo = handler_config['repo']
+
+	repo = args.target_pipeline if args.target_pipeline is not None else handler_config['repo']
 	pipeline = handler_config['pipeline']
 	params = handler_config['params']
 	default_bucket_config = handler_config['s3_blobstore']
+	pipeline_name_tokens = pipeline.split('/')
+	target_pipeline_name = pipeline_name_tokens[len(pipeline_name_tokens) - 1]
 
 	RUN_NAME = handler_config['run_name'] if handler_config.get('run_name') is not None else 'Run1'
 
@@ -96,32 +113,31 @@ def main():
 	if github_raw_content is None:
 		github_raw_content = DEFAULT_GITHUB_RAW_CONTENT
 
-	handle_pipelines()
+	analysis_output_file = 'analysis-' + target_pipeline_name
 
-def create_offline_repo_converter_as_resource():
-	offline_gen_resource = { 'name': 'offline-gen-repo-converter'}
-	offline_gen_resource['type'] = 's3'
-	offline_gen_resource['source'] = copy.copy(default_bucket_config)
-	offline_gen_resource['source']['regexp'] = '%s/%s/%s.(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, 'offline-gen/utils/python/pipeline_repo_converter')
+	if git_only:
+		handle_git_only_pipelines()
+	elif analysis_only:
+		handle_docker_analysis_of_pipelines()
+	else:
+		handle_pipelines()
 
-	return offline_gen_resource
 
-def create_offline_stemcell_downloader_as_resource():
-	offline_gen_resource = { 'name': 'offline-gen-stemcell-downloader'}
-	offline_gen_resource['type'] = 's3'
-	offline_gen_resource['source'] = copy.copy(default_bucket_config)
-	offline_gen_resource['source']['regexp'] = '%s/%s/%s(.*).sh' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, 'offline-gen/utils/shell/find_and_download')
+# def create_offline_repo_converter_as_resource():
+# 	offline_gen_resource = { 'name': 'offline-gen-repo-converter'}
+# 	offline_gen_resource['type'] = 's3'
+# 	offline_gen_resource['source'] = copy.copy(default_bucket_config)
+# 	offline_gen_resource['source']['regexp'] = '%s/%s/%s.(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, 'offline-gen/utils/python/pipeline_repo_converter')
+#
+# 	return offline_gen_resource
 
-	return offline_gen_resource
-
-def create_privileged_docker_image_resource_as_resource_type():
-	privileged_docker_image_resource = { 'name': 'privileged-docker-image-resource'}
-	privileged_docker_image_resource['type'] = 'docker-image'
-	privileged_docker_image_resource['privileged'] = True
-	privileged_docker_image_resource['source']['repository'] = 'concourse/docker-image-resource'
-	privileged_docker_image_resource['source']['tag'] = 'latest'
-
-	return privileged_docker_image_resource
+# def create_offline_stemcell_downloader_as_resource():
+# 	offline_gen_resource = { 'name': 'offline-gen-stemcell-downloader'}
+# 	offline_gen_resource['type'] = 's3'
+# 	offline_gen_resource['source'] = copy.copy(default_bucket_config)
+# 	offline_gen_resource['source']['regexp'] = '%s/%s/%s(.*).sh' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, 'offline-gen/utils/shell/find_and_download')
+#
+# 	return offline_gen_resource
 
 # def add_docker_image_as_resource(pipeline):
 # 	new_docker_resource = { 'name': 'test-ubuntu-docker'}
@@ -129,6 +145,82 @@ def create_privileged_docker_image_resource_as_resource_type():
 # 	new_docker_resource['source'] = { 'repository' : 'ubuntu', 'tag' : '17.04' }
 # 	pipeline['resources'].append(new_docker_resource)
 # 	final_input_resources.append(new_docker_resource)
+
+def handle_docker_analysis_of_pipelines():
+	global src_pipeline, offline_pipeline
+
+	print('Repo Path:     {}\nPipeline file: {}'.format(repo, pipeline))
+	src_pipeline = read_config(repo + '/' + pipeline )
+	offline_pipeline = copy.copy(src_pipeline)
+
+	docker_analysis_map = analyze_pipeline_for_docker_images(None, src_pipeline)
+	write_config( docker_analysis_map, analysis_output_file)
+
+	print ''
+	print 'Created docker image analysis of pipeline: ' + analysis_output_file
+	return docker_analysis_map
+
+def handle_git_only_pipelines():
+	global src_pipeline
+
+	print('Repo Path:     {}\nPipeline file: {}'.format(repo, pipeline))
+	src_pipeline = read_config(repo + '/' + pipeline )
+
+	#print 'Got src pipeline: {}'.format(src_pipeline)
+	pipeline_name_tokens = pipeline.split('/')
+	target_pipeline_name = pipeline_name_tokens[len(pipeline_name_tokens) - 1]
+
+	git_only_pipeline_filename= 'build-git-repos-' + target_pipeline_name
+
+	try:
+		git_input_resources = handle_git_only_resources()
+		save_git_only_pipeline(	git_input_resources,
+								git_only_pipeline_filename
+							)
+
+		print '\nFinished git_only pipeline generation!!\n\n'
+
+	except Exception as e:
+		print('Error : {}'.format(e))
+		print(traceback.format_exc())
+		print >> sys.stderr, 'Error occured.'
+		sys.exit(1)
+
+def save_git_only_pipeline(git_input_resources, git_only_pipeline_filename):
+
+	print 'Input git resources:{}'.format(git_input_resources)
+
+	offlinegen_param_file_source = copy.copy(default_bucket_config)
+	pipeline_param_file_source = copy.copy(default_bucket_config)
+
+	offlinegen_param_file_source['regexp'] = '%s/%s/offline-gen/input-param.(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH)
+	pipeline_param_file_source['regexp'] = '%s/%s/offline-gen/pipeline-param.(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH)
+
+	try:
+		context = {}
+		resource_context = {
+	        'context': context,
+			'source_resource_types': [],
+	        #'process_resource_jobs': process_resource_jobs,
+			'offlinegen_param_file_source': offlinegen_param_file_source,
+			'pipeline_param_file_source': pipeline_param_file_source,
+			'input_resources': git_input_resources
+	    }
+
+		git_only_pipeline = template.render_as_config(
+	        os.path.join('.', 'blobstore/parse_git_repos.v1.yml' ),
+	        resource_context
+	    )
+		write_config(git_only_pipeline, git_only_pipeline_filename)
+
+		print ''
+		print 'Created git only pipeline: ' + git_only_pipeline_filename
+	except Exception as e:
+		print('Error during git only pipeline generation : {}'.format(e))
+		print(traceback.format_exc())
+		print >> sys.stderr, 'Error occured.'
+		sys.exit(1)
+
 
 def handle_pipelines():
 	global src_pipeline, offline_pipeline
@@ -205,6 +297,7 @@ def save_blobuploader_pipeline(input_resources, output_resources, blobstore_uplo
 		sys.exit(1)
 
 
+
 def analyze_pipeline_for_docker_images(pipeline_repo_path, target_pipeline):
 	global docker_image_analysis_map
 
@@ -221,7 +314,9 @@ def analyze_pipeline_for_docker_images(pipeline_repo_path, target_pipeline):
 	pprint(docker_image_for_git_task_list)
 
 	docker_image_analysis_map = { 'docker_list': full_docker_ref, 'pipeline_task_docker_references':  docker_image_for_git_task_list }
-	#write_config( docker_image_analysis_map, analysis_output_file)
+	write_config( docker_image_analysis_map, analysis_output_file)
+	print ''
+	print 'Created docker image analysis of pipeline: ' + analysis_output_file
 
 	return docker_image_analysis_map
 
@@ -315,7 +410,7 @@ def identify_associated_docker_image_for_task(git_task_list):
 		for task in task_list:
 			index = task['file'].index('/')
 			task_path = task['file'][index+1:]
-			task_defn = load_github_resource(git_repo_path + task_path)
+			task_defn = load_github_resource(git_repo_id, git_repo_path, task_path)
 			image_source = task_defn.get('image_source')
 			if image_source is None:
 				image_source = task_defn.get('image_resource')
@@ -340,25 +435,46 @@ def identify_associated_docker_image_for_task(git_task_list):
 
 		docker_image_for_git_task_list[git_repo_id] = docker_image_task_entry
 
-def load_github_resource(uri):
+def load_github_resource(git_repo_id, git_remote_uri, task_file_path):
 	try:
-		response = requests.get(uri)
-		yamlcontent = yaml.safe_load(response.content)
-		return yamlcontent
+		# First try with local file path
+		input_file = git_repo_id + '/' + task_file_path
+
+		with open(input_file) as task_file:
+			yamlcontent = yaml.safe_load(config_file)
+			print 'Successful reading task as local file: {}\n'.format(input_file)
+			return yamlcontent
 	except IOError as e:
-		print e
-		print >> sys.stderr, 'Not able to load content from ' + uri
-		sys.exit(1)
+		try:
+			print >> sys.stderr, 'Problem with reading task as local file: {}'.format(input_file)
+			response = requests.get(git_remote_uri + task_file_path)
+			yamlcontent = yaml.safe_load(response.content)
+			print 'Went with Remote url for task: {}\n'.format(git_remote_uri + task_file_path)
+			return yamlcontent
+		except IOError as e:
+			print e
+			print >> sys.stderr, 'Not able to load content from : ' + uri
+			sys.exit(1)
 
 
 def handle_resources():
+
+	global docker_image_analysis_map
 
 	#task_list = identify_all_task_files(src_pipeline)
 	# Identify all tasks and docker images used in the final pipeline
 	# Add docker images as resources in source pipeline
 	# Then rejigger the resources to be input and output in the blobuploader pipeline
 
-	docker_image_analysis_map = analyze_pipeline_for_docker_images(None, offline_pipeline)
+	# Try to use saved default docker image analysis map file
+	docker_image_analysis_map = read_config( analysis_output_file, abort=False)
+
+	# Else handle full parsing
+	if docker_image_analysis_map is None:
+		docker_image_analysis_map = analyze_pipeline_for_docker_images(None, offline_pipeline)
+	else:
+		print 'Used existing docker image analysis map of pipeline from: ' + analysis_output_file
+
 	for docker_image_ref in docker_image_analysis_map['docker_list']:
 		version = 'latest' if docker_image_ref.get('tag') is None else docker_image_ref.get('tag')
 		docker_image_ref['tag'] = version
@@ -390,6 +506,28 @@ def handle_resources():
 			resource_process_job = handle_default_resource(resource)
 
 	print '\nFinished handling of all resource jobs\n'
+
+def handle_git_only_resources():
+
+	#task_list = identify_all_task_files(src_pipeline)
+	# Identify all tasks and docker images used in the final pipeline
+	# Add docker images as resources in source pipeline
+	# Then rejigger the resources to be input and output in the blobuploader pipeline
+
+	git_only_resources = []
+
+	# Then add the modified resources to the offline_pipeline
+	for resource in src_pipeline['resources']:
+		res_type = resource['type']
+		res_name = resource['name']
+		resource_process_job = None
+
+		if res_type == 'git':
+			git_only_resources.append(resource)
+
+	print '\nFinished handling of all git only resource jobs\n'
+	return git_only_resources
+
 
 def find_match_in_list(list, name):
 	for entry in list:
@@ -1243,14 +1381,15 @@ def handle_default_resource(resource):
 	#print 'Job for File resource: {}'.format(file_job_resource)
 	return file_job_resource
 
-def read_config(input_file):
+def read_config(input_file, abort=True):
 	try:
 		with open(input_file) as config_file:
 			yamlcontent = yaml.safe_load(config_file)
 			return yamlcontent
 	except IOError as e:
 		print >> sys.stderr, 'Problem with file, abort!'
-		sys.exit(1)
+		if abort:
+			sys.exit(1)
 	except Exception as ce:
 		print ce
 		print >> sys.stderr, 'Not a yaml config file.'
