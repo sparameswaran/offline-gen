@@ -1,0 +1,100 @@
+
+jobs:
+- name: offline-gen-full-generation
+  plan:
+  - aggregate:
+    {% for resource in git_resources %}
+    - get: {{resource['name']}}
+    {% endfor %}
+    - get: offline-gen-pipeline
+    - get: target-pipeline
+    - get: offlinegen-param-file
+    - get: pipeline-param-file
+  - config:
+      image_resource:
+        source: {repository: nsxedgegen/offline-gen-worker}
+        type: docker-image
+      inputs:
+      - name: offline-gen-pipeline
+      - name: target-pipeline
+      - name: offlinegen-param-file
+      - name: pipeline-param-file
+      {% for resource in git_resources %}
+      - {name: {{ resource['name'] }} }
+      {% endfor %}
+      outputs:
+      - name: offline-gen-output
+      platform: linux
+      run:
+        args:
+        - -exc
+        - |
+            python offline-gen-pipeline/offline-generator.py -analyze target-pipeline offlinegen-param-file/offline-gen-params*.yml;
+            python offline-gen-pipeline/offline-generator.py target-pipeline offlinegen-param-file/offline-gen-params*.yml;
+            mv analysis-*  blobstore-*yml offline-*yml offline-gen-output/
+            cd offline-gen-output
+            for file in $(ls *.yml)
+            do
+              file_basename=$(basename $file .yml)
+              mv ${file} ${file_basename}-1.0.yml
+            done
+        path: /bin/bash
+    task: generate-offline
+
+  - aggregate:
+    - put: analysis-results-file
+      params: { file: offline-gen-output/analysis-* }
+    - put: offline-gen-blobstore-upload-file
+      params: { file: offline-gen-output/blobstore-* }
+    - put: offline-gen-offline-pipeline-file
+      params: { file: offline-gen-output/offline-* }
+
+resource_types:
+- name: file-url
+  type: docker-image
+  source:
+    repository: pivotalservices/concourse-curl-resource
+    tag: latest
+
+resources:
+- name: offline-gen-pipeline
+  type: git
+  source:
+    branch: master
+    uri: https://github.com/sparameswaran/offline-gen.git
+
+- name: {{target_pipeline['name']}}
+  type: file-url
+  source:
+    url: {{target_pipeline['url']}}
+    filename: {{target_pipeline['filename']}}
+    skip_ssl_verification: true
+    #username: username
+    #password: password
+
+- name: offline-gen-param-file
+  type: s3
+  source: {{ offline_gen_param_file_source }}
+
+- name: pipeline-param-file
+  type: s3
+  source: {{ pipeline_param_file_source }}
+
+- name: analysis-results-file
+  type: s3
+  source: {{ analysis_results_filesource }}
+
+- name: offline-gen-blobstore-upload-file
+  type: s3
+  source: {{ blobstore_upload_pipeline_source }}
+
+- name: offline-gen-offline-pipeline-file
+  type: s3
+  source: {{ offline_pipeline_source }}
+
+
+  {% for resource in git_resources %}
+- name: {{ resource['name'] }}
+  source: {{ resource['source'] }}
+  type: git
+  {% endfor %}

@@ -214,13 +214,13 @@ def save_kickoff_pipeline(git_input_resources, git_only_pipeline_filename):
 	    }
 
 		git_only_pipeline = template.render_as_config(
-	        os.path.join('.', 'blobstore/kickoff_offline_gen.v1.yml' ),
+	        os.path.join('.', 'blobstore/full_offline_generation.v1.yml' ),
 	        resource_context
 	    )
 		write_config(git_only_pipeline, git_only_pipeline_filename)
 
 		print ''
-		print 'Created git only pipeline: ' + git_only_pipeline_filename
+		print 'Created full offline analysis pipeline: ' + git_only_pipeline_filename
 	except Exception as e:
 		print('Error during git only pipeline generation : {}'.format(e))
 		print(traceback.format_exc())
