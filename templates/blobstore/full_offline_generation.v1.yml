@@ -8,7 +8,7 @@ jobs:
     {% endfor %}
     - get: offline-gen-pipeline
     - get: target-pipeline
-    - get: offlinegen-param-file
+    - get: offline-gen-param-file
     - get: pipeline-param-file
   - config:
       image_resource:
@@ -17,7 +17,7 @@ jobs:
       inputs:
       - name: offline-gen-pipeline
       - name: target-pipeline
-      - name: offlinegen-param-file
+      - name: offline-gen-param-file
       - name: pipeline-param-file
       {% for resource in git_resources %}
       - {name: {{ resource['name'] }} }
@@ -63,12 +63,11 @@ resources:
     branch: master
     uri: https://github.com/sparameswaran/offline-gen.git
 
-- name: {{target_pipeline['name']}}
-  type: file-url
+- name: target-pipeline
+  type: git
   source:
-    url: {{target_pipeline['url']}}
-    filename: {{target_pipeline['filename']}}
-    skip_ssl_verification: true
+    branch: {{target_pipeline_branch}}
+    uri: {{target_pipeline_uri}}
     #username: username
     #password: password
 

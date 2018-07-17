@@ -190,14 +190,12 @@ def save_kickoff_pipeline(git_input_resources, git_only_pipeline_filename):
 
 	offlinegen_param_file_source = copy.copy(default_bucket_config)
 	pipeline_param_file_source = copy.copy(default_bucket_config)
-	kickoff_offline_gen_source = copy.copy(default_bucket_config)
 	analysis_results_filesource = copy.copy(default_bucket_config)
 	blobstore_upload_pipeline_source = copy.copy(default_bucket_config)
 	offline_pipeline_source = copy.copy(default_bucket_config)
 
 	offlinegen_param_file_source['regexp'] = '%s/%s/offline-gen/offline-gen-params-*(.*).yml' % ( RUN_NAME, DEFAULT_RESOURCES_PATH)
 	pipeline_param_file_source['regexp'] = '%s/%s/offline-gen/pipeline-params-*(.*).yml' % ( RUN_NAME, DEFAULT_RESOURCES_PATH)
-	kickoff_offline_gen_source['regexp'] = '%s/%s/offline-gen/kickoff-*(.*).yml' % ( RUN_NAME, DEFAULT_RESOURCES_PATH)
 	analysis_results_filesource['regexp'] = '%s/%s/offline-gen/analysis-*(.*).yml' % ( RUN_NAME, DEFAULT_RESOURCES_PATH)
 	try:
 		context = {}
@@ -208,6 +206,8 @@ def save_kickoff_pipeline(git_input_resources, git_only_pipeline_filename):
 			'offline_gen_param_file_source': offlinegen_param_file_source,
 			'pipeline_param_file_source': pipeline_param_file_source,
 			'git_resources': git_input_resources,
+			'target_pipeline_branch': handler_config['target_pipeline_branch'],
+	    	'target_pipeline_uri': handler_config['target_pipeline_uri'],
 			'analysis_results_filesource': analysis_results_filesource,
 			'blobstore_upload_pipeline_source': blobstore_upload_pipeline_source,
 			'offline_pipeline_source': offline_pipeline_source
