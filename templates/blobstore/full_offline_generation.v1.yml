@@ -40,7 +40,6 @@ jobs:
             done
         path: /bin/bash
     task: generate-offline
-
   - aggregate:
     - put: analysis-results-file
       params: { file: offline-gen-output/analysis-* }
@@ -49,14 +48,39 @@ jobs:
     - put: offline-gen-offline-pipeline-file
       params: { file: offline-gen-output/offline-* }
 
+- name: start-full-generation-for-((target_pipeline_name))
+  plan:
+  - aggregate:
+    - get: pipeline-param-file
+    - get: offline-gen-param-file
+    - get: offline-gen-blobstore-upload-file
+      trigger: true
+  - put: blobstore-upload-for-((target_pipeline_name))-pipeline
+    params:
+      pipelines:
+      - name: blob-upload-for-((target_pipeline_name))-pipeline
+        team: ((concourse_team))
+        config_file: offline-gen-blobstore-upload-file/*.yml
+        vars_files:
+        - offline-gen-param-file/offline-gen-param*
+        - pipeline-param-file/pipeline-param*
+
 resource_types:
-- name: file-url
+- name: concourse-pipeline
   type: docker-image
   source:
-    repository: pivotalservices/concourse-curl-resource
-    tag: latest
+    repository: concourse/concourse-pipeline-resource
 
 resources:
+- name: blobstore-upload-for-((target_pipeline_name))-pipeline
+  type: concourse-pipeline
+  source:
+    insecure: "true"
+    teams:
+    - name: ((concourse_team))
+      username: ((concourse_username))
+      password: ((concourse_password))
+
 - name: offline-gen-pipeline
   type: git
   source:
