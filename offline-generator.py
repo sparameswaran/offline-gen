@@ -358,6 +358,9 @@ def handle_inline_parameterization_of_s3blobstore(content):
 		for key in content.keys():
 			if key == 'source':
 				source = content[key]
+				if 'access_key_id' not in source.keys():
+					return
+
 				for key in s3blobstore_replacement_token_map:
 					source[key] = '((%s))' % (s3blobstore_replacement_token_map[key])
 			else:
