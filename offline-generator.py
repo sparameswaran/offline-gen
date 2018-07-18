@@ -66,12 +66,7 @@ github_raw_content = None
 
 def init():
 	parser = argparse.ArgumentParser()
-	# parser.add_argument('repo', type=str,
-	#         help='path to the pipeline repo')
-	# parser.add_argument('pipeline', type=str,
-	#         help='path to the execution pipeline')
-	# parser.add_argument('params', type=str,
-	#         help='path to the params file for the pipeline')
+
 	parser.add_argument('target_pipeline', type=str,
 		help='path to the target pipeline git repo dir')
 	parser.add_argument('input_yml', type=str,
@@ -498,7 +493,8 @@ def identify_associated_docker_image_for_task(git_task_list):
 																		'image': docker_repo ,
 																		'script': task_defn['run']['path'] ,
 																		'inputs': task_defn.get('inputs'),
-																		'outputs': task_defn.get('outputs')
+																		'outputs': task_defn.get('outputs'),
+																		'params': task_defn.get('params')
 																		}
 																}
 															)
@@ -922,6 +918,7 @@ def handle_get_resource_details(get_resource_name, job_tasks_reference):
 		#                                'task': 'install-nsx-t'}]},
 
 		docker_image_tarball_name = None
+		original_task_input_params = None
 		for job_task in job_tasks_reference[job_name]:
 			#print 'Job tasks is {} and Task is {}'.format(job_tasks_reference, job_task)
 			matching_task_name = job_task['task']
@@ -934,6 +931,7 @@ def handle_get_resource_details(get_resource_name, job_tasks_reference):
 						version = 'latest' if docker_image_ref.get('tag') is None else docker_image_ref.get('tag')
 						docker_image_ref['tag'] = version
 						docker_image_tarball_name = '%s-%s-%s-tarball' % (docker_image_ref['repository'].replace('/', '-'), version, 'docker')
+
 						break
 
 		new_git_plan_entry = { 'get' : matching_tarballed_resource['name'] }
@@ -1014,6 +1012,10 @@ def inline_task_details(plan, alias_resource_map, ref_map_target_job_name, saved
 
 				original_task_outputs = task_defn['outputs']
 				original_task_script = task_defn['script']
+				original_task_input_params = task_defn['params']
+				if original_task_input_params is not None:
+					merge_param_names(given_task_params, original_task_input_params)
+					plan['params'] = given_task_params
 
 				version = 'latest' if docker_image_ref.get('tag') is None else docker_image_ref.get('tag')
 				docker_image_tarball_name = '%s-%s-%s-tarball' %  (
@@ -1103,6 +1105,13 @@ def inline_task_details(plan, alias_resource_map, ref_map_target_job_name, saved
 		plan['config']['outputs'] = normalize_list(new_task_outputs)
 
 	#print 'Final inlined task plan: {}'.format(plan)
+
+# Pipeline tasks might not specify all expected keys for a given tasks
+# So, add those back into the inlined params for a task so the actual task execution does not barf
+def merge_param_names(given_task_params, original_task_input_params):
+	for expected_key in original_task_input_params.keys():
+		if expected_key not in given_task_params.keys():
+			given_task_params[expected_key] = None
 
 def handle_preinlined_task_details(plan, saved_plan_inputs):
 

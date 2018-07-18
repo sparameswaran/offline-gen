@@ -45,6 +45,45 @@ Use the `sample_input.yml` to create a new input file that would contain configs
 
 Parameters specified in the pipelines would be preseved as is.
 
+# Using minio as a S3 Blobstore
+
+Use [minio](https://minio.io/downloads.html) as a S3 compatible Blobstore:
+```
+#!/bin/bash
+
+# Create a datastore folder
+mkdir ./minio-data     
+
+# Set up access keys  
+export MINIO_ACCESS_KEY=my_access_id
+export MINIO_SECRET_KEY=my_secret_access_key
+
+# Set some listen address
+export SERVER_ENDPOINT=<SERVER_IP>:9000
+
+# Start the minio server
+nohup ./minio server --address $SERVER_ENDPOINT ./minio-data &
+```
+
+Download minio client [mc](https://minio.io/downloads.html#download-client) and use that to create a minio bucket
+```
+# Register with a local minio server as local
+mc config host add local http://localhost:9000 my-access-id my-secret-access-key
+
+# Create a bucket on local minio server
+mc mb local/offline-bucket
+# List the bucket
+mc ls remote/offline-bucket
+
+# Register with a remote minio server as remote
+mc config host add remote http://$SERVER_IP:9000 my-access-id my-secret-access-key
+
+# Create new offline-bucket2
+mc mb remote/offline-bucket2
+```
+Make sure the bucket name does not contain `_` character.
+Edit the input param settings to use the minio access keys.
+
 # Stages
 
 * Register the `kickoff-offline-gen-pipeline.yml` pipeline
