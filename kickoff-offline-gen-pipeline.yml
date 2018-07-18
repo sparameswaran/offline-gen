@@ -43,7 +43,7 @@ jobs:
     - put: kickoff-offline-gen-output-pipeline
       params: { file: offline-gen-output/kickoff-*.yml }
 
-- name: start-full-generation
+- name: start-full-generation-for-((target_pipeline_name))
   plan:
   - aggregate:
     - get: pipeline-param-file
@@ -54,7 +54,7 @@ jobs:
     params:
       #pipelines_file: path/to/pipelines/file
       pipelines:
-      - name: start-full-generation-pipeline
+      - name: start-full-generation-for-((target_pipeline_name))-pipeline
         team: ((concourse_team))
         config_file: kickoff-offline-gen-output-pipeline/*.yml
         vars_files:
@@ -62,12 +62,6 @@ jobs:
         - pipeline-param-file/pipeline-param*
 
 resource_types:
-- name: file-url
-  type: docker-image
-  source:
-    repository: pivotalservices/concourse-curl-resource
-    tag: latest
-
 - name: concourse-pipeline
   type: docker-image
   source:
