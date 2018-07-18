@@ -101,11 +101,20 @@ Edit the input param settings to use the minio access keys.
   * Init
   <div><img src="images/kickoff-execute.png" width="400"/></div>
 
-* Execution of it would create a new pipeline for handling full generation of the blobstore upload and offlined pipelines.
+* Execution of the kickoff pipeline would inject a new pipeline for handling full generation of the blobstore upload and offlined pipelines.
   * Start of registering full Generation
   <div><img src="images/full-generation-auto.png" width="400"/></div>
   * Kickoff Complete
   <div><img src="images/full-generation-registered.png" width="400"/></div>
+  * Refresh the concourse browser page and check for new pipeline registered on the left hand panel
+  * Newly injected `full generation` pipeline in paused state
+  <div><img src="images/full-generation-pipeline-paused.png" width="400"/></div>
+  * Un-pause the full generation pipeline
+  * Kickoff full offline generation pipeline
+  <div><img src="images/full-offline-generation.png" width="400"/></div>
+  * New Blobstore upload pipeline injected
+  <div><img src="images/injecting-blobstore-upload-pipeline.png" width="400"/></div>
+    Automatic run of the blobstore upload pipeline might fail if the supplied params are not incomplete. Best to save the pipeline and run it separately with the right parameters so correctly versioned artifacts can be saved into the S3 blobstore.
   * Full Generation of upload and offline pipelines
   <div><img src="images/full-generation.png" width="400"/></div>
 
