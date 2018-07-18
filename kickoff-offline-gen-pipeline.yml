@@ -100,26 +100,26 @@ resources:
 - name: offline-gen-param-file
   type: s3
   source:
-    access_key_id: ((s3_access_key_id))
-    bucket: ((s3_bucket))
-    endpoint: ((s3_endpoint))
-    secret_access_key: ((s3_secret_access_key))
+    access_key_id: ((offline_gen_s3_access_key_id))
+    bucket: ((offline_gen_s3_bucket))
+    endpoint: ((offline_gen_s3_endpoint))
+    secret_access_key: ((offline_gen_s3_secret_access_key))
     regexp: ((run_name))/resources/offline-gen/offline-gen-params-*(.*).yml
 
 - name: pipeline-param-file
   type: s3
   source:
-    access_key_id: ((s3_access_key_id))
-    bucket: ((s3_bucket))
-    endpoint: ((s3_endpoint))
-    secret_access_key: ((s3_secret_access_key))
+    access_key_id: ((offline_gen_s3_access_key_id))
+    bucket: ((offline_gen_s3_bucket))
+    endpoint: ((offline_gen_s3_endpoint))
+    secret_access_key: ((offline_gen_s3_secret_access_key))
     regexp: ((run_name))/resources/offline-gen/pipeline-params-*(.*).yml
 
 - name: kickoff-offline-gen-output-pipeline
   type: s3
   source:
-    access_key_id: ((s3_access_key_id))
-    bucket: ((s3_bucket))
-    endpoint: ((s3_endpoint))
-    secret_access_key: ((s3_secret_access_key))
+    access_key_id: ((offline_gen_s3_access_key_id))
+    bucket: ((offline_gen_s3_bucket))
+    endpoint: ((offline_gen_s3_endpoint))
+    secret_access_key: ((offline_gen_s3_secret_access_key))
     regexp: ((run_name))/resources/offline-gen/kickoff-*(.*).yml
