@@ -326,7 +326,10 @@ def handle_pipelines():
 def save_offline_pipeline(offline_pipeline_filename):
 	try:
 		handle_offline_tasks()
-		handle_inline_parameterization_of_s3blobstore(offline_pipeline)
+
+		if "true" == handler_config.get('parameterize_s3_bucket_params'):
+			handle_inline_parameterization_of_s3blobstore(offline_pipeline)
+
 		write_config(offline_pipeline, offline_pipeline_filename, useNoAliasDumper=False)
 		print 'Created offline pipeline: ' + offline_pipeline_filename
 	except Exception as e:
@@ -381,6 +384,10 @@ def save_blobuploader_pipeline(input_resources, output_resources, blobstore_uplo
 			os.path.join('.', 'blobstore/blobstore_upload_pipeline.v1.yml' ),
 			resource_context
 		)
+
+		if "true" == handler_config.get('parameterize_s3_bucket_params'):
+			handle_inline_parameterization_of_s3blobstore(blobstore_upload_pipeline)
+
 		write_config(blobstore_upload_pipeline, blobstore_upload_pipeline_filename)
 
 		print ''
