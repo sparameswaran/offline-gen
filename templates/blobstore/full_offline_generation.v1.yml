@@ -43,7 +43,7 @@ jobs:
   - aggregate:
     - put: analysis-results-file-for-((target_pipeline_name))
       params: { file: offline-gen-output/analysis-* }
-    - put: blobstore-upload-for-((target_pipeline_name))-pipeline
+    - put: blobstore-upload-for-((target_pipeline_name))
       params: { file: offline-gen-output/blobstore-* }
     - put: offline-pipeline-for-((target_pipeline_name))
       params: { file: offline-gen-output/offline-* }
@@ -53,14 +53,14 @@ jobs:
   - aggregate:
     - get: pipeline-param-file
     - get: offline-gen-param-file
-    - get: blobstore-upload-for-((target_pipeline_name))-pipeline
+    - get: blobstore-upload-for-((target_pipeline_name))
       trigger: true
   - put: blobstore-upload-for-((target_pipeline_name))-pipeline
     params:
       pipelines:
       - name: blob-upload-for-((target_pipeline_name))-pipeline
         team: ((concourse_team))
-        config_file: blobstore-upload-for-((target_pipeline_name))-pipeline/*.yml
+        config_file: blobstore-upload-for-((target_pipeline_name))/*.yml
         vars_files:
         - offline-gen-param-file/offline-gen-param*
         - pipeline-param-file/pipeline-param*
@@ -107,7 +107,7 @@ resources:
   type: s3
   source: {{ analysis_results_filesource }}
 
-- name: blobstore-upload-for-((target_pipeline_name))-pipeline
+- name: blobstore-upload-for-((target_pipeline_name))
   type: s3
   source: {{ blobstore_upload_pipeline_source }}
 
