@@ -55,11 +55,11 @@ jobs:
       #pipelines_file: path/to/pipelines/file
       pipelines:
       - name: start-full-generation-pipeline
-        team: main
+        team: ((concourse_team))
         config_file: kickoff-offline-gen-output-pipeline/*.yml
         vars_files:
-        - offline-gen-param-file/*
-        - pipeline-param-file/*
+        - offline-gen-param-file/offline-gen-param*
+        - pipeline-param-file/pipeline-param*
 
 resource_types:
 - name: file-url
@@ -78,11 +78,12 @@ resources:
 - name: offline-gen-full-generation-pipeline
   type: concourse-pipeline
   source:
+    insecure: "true"
     teams:
     - name: ((concourse_team))
       username: ((concourse_username))
       password: ((concourse_password))
-      insecure: "true"
+
 
 - name: offline-gen-pipeline
   type: git
