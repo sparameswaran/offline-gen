@@ -48,7 +48,7 @@ Parameters specified in the pipelines would be preseved as is.
 # Stages
 
 * Register the `kickoff-offline-gen-pipeline.yml` pipeline
-  * [Init](images/kickoff-init.png)
+  * ![Init](images/kickoff-init.png)
 * Execution of it would create a new pipeline for handling full generation of the blobstore upload and offlined pipelines.
   * [kickoff-execute](images/kickoff-execute.png)
   * [start-full-generation](images/full-generation-auto.png)
