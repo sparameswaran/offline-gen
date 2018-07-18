@@ -21,9 +21,9 @@ jobs:
   - config:
       image_resource:
         params: {unpack: true}
-        source: {access_key_id: ((s3_access_key_id)), bucket: ((s3_bucket)), endpoint: ((s3_endpoint)),
+        source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)), endpoint: ((final_s3_endpoint)),
           regexp: test1/resources/docker/nsxedgegen-nsx-t-gen-worker-latest-docker.(.*),
-          secret_access_key: ((s3_secret_access_key))}
+          secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
       - {name: nsxedgegen-nsx-t-gen-worker-latest-docker-tarball}
@@ -98,9 +98,9 @@ jobs:
   - config:
       image_resource:
         params: {unpack: true}
-        source: {access_key_id: ((s3_access_key_id)), bucket: ((s3_bucket)), endpoint: ((s3_endpoint)),
+        source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)), endpoint: ((final_s3_endpoint)),
           regexp: test1/resources/docker/nsxedgegen-nsx-t-gen-worker-latest-docker.(.*),
-          secret_access_key: ((s3_secret_access_key))}
+          secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
       - {name: nsxedgegen-nsx-t-gen-worker-latest-docker-tarball}
@@ -133,9 +133,9 @@ jobs:
   - config:
       image_resource:
         params: {unpack: true}
-        source: {access_key_id: ((s3_access_key_id)), bucket: ((s3_bucket)), endpoint: ((s3_endpoint)),
+        source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)), endpoint: ((final_s3_endpoint)),
           regexp: test1/resources/docker/nsxedgegen-nsx-t-gen-worker-latest-docker.(.*),
-          secret_access_key: ((s3_secret_access_key))}
+          secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
       - {name: nsxedgegen-nsx-t-gen-worker-latest-docker-tarball}
@@ -166,9 +166,9 @@ jobs:
   - config:
       image_resource:
         params: {unpack: true}
-        source: {access_key_id: ((s3_access_key_id)), bucket: ((s3_bucket)), endpoint: ((s3_endpoint)),
+        source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)), endpoint: ((final_s3_endpoint)),
           regexp: test1/resources/docker/nsxedgegen-nsx-t-gen-worker-latest-docker.(.*),
-          secret_access_key: ((s3_secret_access_key))}
+          secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
       - {name: nsxedgegen-nsx-t-gen-worker-latest-docker-tarball}
@@ -203,9 +203,9 @@ jobs:
   - config:
       image_resource:
         params: {unpack: true}
-        source: {access_key_id: ((s3_access_key_id)), bucket: ((s3_bucket)), endpoint: ((s3_endpoint)),
+        source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)), endpoint: ((final_s3_endpoint)),
           regexp: test1/resources/docker/nsxedgegen-nsx-t-gen-worker-latest-docker.(.*),
-          secret_access_key: ((s3_secret_access_key))}
+          secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
       - {name: nsxedgegen-nsx-t-gen-worker-latest-docker-tarball}
@@ -236,9 +236,9 @@ jobs:
   - config:
       image_resource:
         params: {unpack: true}
-        source: {access_key_id: ((s3_access_key_id)), bucket: ((s3_bucket)), endpoint: ((s3_endpoint)),
+        source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)), endpoint: ((final_s3_endpoint)),
           regexp: test1/resources/docker/nsxedgegen-nsx-t-gen-worker-latest-docker.(.*),
-          secret_access_key: ((s3_secret_access_key))}
+          secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
       - {name: nsxedgegen-nsx-t-gen-worker-latest-docker-tarball}
@@ -260,31 +260,31 @@ nsx_t_gen_params: *id001
 resource_types: []
 resources:
 - name: nsx-t-gen-pipeline-tarball
-  source: {access_key_id: ((s3_access_key_id)), bucket: ((s3_bucket)), endpoint: ((s3_endpoint)),
-    regexp: test1/resources/git/nsx-t-gen-pipeline-(.*).tgz, secret_access_key: ((s3_secret_access_key))}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)), endpoint: ((final_s3_endpoint)),
+    regexp: test1/resources/git/nsx-t-gen-pipeline-(.*).tgz, secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: nsxt-ansible-tarball
-  source: {access_key_id: ((s3_access_key_id)), bucket: ((s3_bucket)), endpoint: ((s3_endpoint)),
-    regexp: test1/resources/git/nsxt-ansible-(.*).tgz, secret_access_key: ((s3_secret_access_key))}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)), endpoint: ((final_s3_endpoint)),
+    regexp: test1/resources/git/nsxt-ansible-(.*).tgz, secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: nsx-mgr-ova
-  source: {access_key_id: ((s3_access_key_id)), bucket: ((s3_bucket)), endpoint: ((s3_endpoint)),
-    regexp: test1/resources/file/nsx-mgr-ova-*-(.*), secret_access_key: ((s3_secret_access_key))}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)), endpoint: ((final_s3_endpoint)),
+    regexp: test1/resources/file/nsx-mgr-ova-*-(.*), secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: nsx-ctrl-ova
-  source: {access_key_id: ((s3_access_key_id)), bucket: ((s3_bucket)), endpoint: ((s3_endpoint)),
-    regexp: test1/resources/file/nsx-ctrl-ova-*-(.*), secret_access_key: ((s3_secret_access_key))}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)), endpoint: ((final_s3_endpoint)),
+    regexp: test1/resources/file/nsx-ctrl-ova-*-(.*), secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: nsx-edge-ova
-  source: {access_key_id: ((s3_access_key_id)), bucket: ((s3_bucket)), endpoint: ((s3_endpoint)),
-    regexp: test1/resources/file/nsx-edge-ova-*-(.*), secret_access_key: ((s3_secret_access_key))}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)), endpoint: ((final_s3_endpoint)),
+    regexp: test1/resources/file/nsx-edge-ova-*-(.*), secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: ovftool
-  source: {access_key_id: ((s3_access_key_id)), bucket: ((s3_bucket)), endpoint: ((s3_endpoint)),
-    regexp: test1/resources/file/ovftool-*-(.*), secret_access_key: ((s3_secret_access_key))}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)), endpoint: ((final_s3_endpoint)),
+    regexp: test1/resources/file/ovftool-*-(.*), secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: nsxedgegen-nsx-t-gen-worker-latest-docker-tarball
-  source: {access_key_id: ((s3_access_key_id)), bucket: ((s3_bucket)), endpoint: ((s3_endpoint)),
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)), endpoint: ((final_s3_endpoint)),
     regexp: test1/resources/docker/nsxedgegen-nsx-t-gen-worker-latest-docker.(.*),
-    secret_access_key: ((s3_secret_access_key))}
+    secret_access_key: ((final_s3_secret_access_key))}
   type: s3
