@@ -5,7 +5,7 @@ Offline Generator of Concourse pipelines
 # Motivation
 There are situations where online access is not permitted or allowed. This implies Concourse pipelines would be unable to download github resources, docker images, Pivotal Tiles and other artifacts from online sources in such airgapped environments.
 
-The motivation of this tool is to alleviate the problem of creating and maintaining manually a different set of pipelines that refer to offlined resources, tracking down and saving the resources into blobstores. Rather use a tool to automatically harvest the resources involved into a s3 blobstore, generate the offline pipeline and run in isolated/offline mode.
+The motivation of this tool is to alleviate the problem of tracking down and saving the online resources into blobstores, creating and maintaining manually a different set of pipelines that refer to these offlined resources. Rather use a tool to automatically harvest the resources referred in a pipeline into a S3 compatible blobstore, generate the offline pipeline that refers to these saved artifacts and allow execution in isolated/offline mode.
 
 # Overview
 Creates two separate pipelines that handle:
@@ -20,7 +20,7 @@ Creates two separate pipelines that handle:
 The generated offline and blobstore pipelines would refer to hard coded s3 blobstore details used by the offline-gen tool to store and save artifacts.
 
 Once the blobs have been saved into a blobstore, these can be exported and imported into a different s3 blobstore. The generated pipelines would be saved under <run-id>/resources/offline-gen/<offline|blobstore-upload>-<pipeline-name>.yml
-<div><img src="images/offlinegen-output.png" width="300"/></div>
+<div><img src="images/offlinegen-output.png" width="450"/></div>
 
 The generated offline pipeline would then have to be updated to reflect the new s3 blobstore from previous blobstore that was used during the offline pipeline generation and blob upload pipeline execution.
 
@@ -132,7 +132,7 @@ Edit the input param settings to use the minio access keys.
 
 * Blobstore upload pipeline would be saved along with the offline version of the target pipeline
     * S3 Blobstore Upload and Offline pipelines
-    <div><img src="images/offlinegen-output.png" width="300"/></div>
+    <div><img src="images/offlinegen-output.png" width="450"/></div>
 
 * Running the blobstore upload pipeline would then upload all resources/docker images/files/pivnet tiles/stemcells etc. into the S3 blobstore.
   * Blobstore Upload Pipeline
