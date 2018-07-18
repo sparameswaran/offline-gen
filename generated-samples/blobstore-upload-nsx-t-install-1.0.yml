@@ -21,7 +21,8 @@ jobs:
   - aggregate:
     - config:
         image_resource:
-          source: {repository: ubuntu}
+          source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+            endpoint: ((final_s3_endpoint)), repository: ubuntu, secret_access_key: ((final_s3_secret_access_key))}
           type: docker-image
         inputs:
         - {name: input-git-nsx-t-gen-pipeline}
@@ -43,7 +44,8 @@ jobs:
       task: prepare-git-nsx-t-gen-pipeline-bit-to-export
     - config:
         image_resource:
-          source: {repository: ubuntu}
+          source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+            endpoint: ((final_s3_endpoint)), repository: ubuntu, secret_access_key: ((final_s3_secret_access_key))}
           type: docker-image
         inputs:
         - {name: input-git-nsxt-ansible}
@@ -64,7 +66,8 @@ jobs:
       task: prepare-git-nsxt-ansible-bit-to-export
     - config:
         image_resource:
-          source: {repository: ubuntu}
+          source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+            endpoint: ((final_s3_endpoint)), repository: ubuntu, secret_access_key: ((final_s3_secret_access_key))}
           type: docker-image
         inputs:
         - {name: input-file-nsx-mgr-ova}
@@ -81,7 +84,8 @@ jobs:
       task: prepare-nsx-mgr-ova-bit-to-export
     - config:
         image_resource:
-          source: {repository: ubuntu}
+          source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+            endpoint: ((final_s3_endpoint)), repository: ubuntu, secret_access_key: ((final_s3_secret_access_key))}
           type: docker-image
         inputs:
         - {name: input-file-nsx-ctrl-ova}
@@ -99,7 +103,8 @@ jobs:
       task: prepare-nsx-ctrl-ova-bit-to-export
     - config:
         image_resource:
-          source: {repository: ubuntu}
+          source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+            endpoint: ((final_s3_endpoint)), repository: ubuntu, secret_access_key: ((final_s3_secret_access_key))}
           type: docker-image
         inputs:
         - {name: input-file-nsx-edge-ova}
@@ -117,7 +122,8 @@ jobs:
       task: prepare-nsx-edge-ova-bit-to-export
     - config:
         image_resource:
-          source: {repository: ubuntu}
+          source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+            endpoint: ((final_s3_endpoint)), repository: ubuntu, secret_access_key: ((final_s3_secret_access_key))}
           type: docker-image
         inputs:
         - {name: input-file-ovftool}
@@ -134,7 +140,8 @@ jobs:
       task: prepare-ovftool-bit-to-export
     - config:
         image_resource:
-          source: {repository: ubuntu}
+          source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+            endpoint: ((final_s3_endpoint)), repository: ubuntu, secret_access_key: ((final_s3_secret_access_key))}
           type: docker-image
         inputs:
         - {name: input-docker-nsxedgegen-nsx-t-gen-worker-latest-docker}
@@ -194,7 +201,8 @@ jobs:
     params: {rootfs: true}
   - config:
       image_resource:
-        source: {repository: ubuntu}
+        source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+          endpoint: ((final_s3_endpoint)), repository: ubuntu, secret_access_key: ((final_s3_secret_access_key))}
         type: docker-image
       inputs:
       - {name: input-git-nsx-t-gen-pipeline}
@@ -222,7 +230,8 @@ jobs:
     params: {rootfs: true}
   - config:
       image_resource:
-        source: {repository: ubuntu}
+        source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+          endpoint: ((final_s3_endpoint)), repository: ubuntu, secret_access_key: ((final_s3_secret_access_key))}
         type: docker-image
       inputs:
       - {name: input-git-nsxt-ansible}
@@ -248,7 +257,8 @@ jobs:
   - {get: input-file-nsx-mgr-ova}
   - config:
       image_resource:
-        source: {repository: ubuntu}
+        source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+          endpoint: ((final_s3_endpoint)), repository: ubuntu, secret_access_key: ((final_s3_secret_access_key))}
         type: docker-image
       inputs:
       - {name: input-file-nsx-mgr-ova}
@@ -270,7 +280,8 @@ jobs:
   - {get: input-file-nsx-ctrl-ova}
   - config:
       image_resource:
-        source: {repository: ubuntu}
+        source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+          endpoint: ((final_s3_endpoint)), repository: ubuntu, secret_access_key: ((final_s3_secret_access_key))}
         type: docker-image
       inputs:
       - {name: input-file-nsx-ctrl-ova}
@@ -292,7 +303,8 @@ jobs:
   - {get: input-file-nsx-edge-ova}
   - config:
       image_resource:
-        source: {repository: ubuntu}
+        source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+          endpoint: ((final_s3_endpoint)), repository: ubuntu, secret_access_key: ((final_s3_secret_access_key))}
         type: docker-image
       inputs:
       - {name: input-file-nsx-edge-ova}
@@ -314,7 +326,8 @@ jobs:
   - {get: input-file-ovftool}
   - config:
       image_resource:
-        source: {repository: ubuntu}
+        source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+          endpoint: ((final_s3_endpoint)), repository: ubuntu, secret_access_key: ((final_s3_secret_access_key))}
         type: docker-image
       inputs:
       - {name: input-file-ovftool}
@@ -337,7 +350,8 @@ jobs:
     params: {rootfs: true}
   - config:
       image_resource:
-        source: {repository: ubuntu}
+        source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+          endpoint: ((final_s3_endpoint)), repository: ubuntu, secret_access_key: ((final_s3_secret_access_key))}
         type: docker-image
       inputs:
       - {name: input-docker-nsxedgegen-nsx-t-gen-worker-latest-docker}
@@ -380,59 +394,83 @@ jobs:
     put: output-docker-nsxedgegen-nsx-t-gen-worker-latest-docker
 resource_types:
 - name: file-url
-  source: {repository: pivotalservices/concourse-curl-resource, tag: latest}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), repository: pivotalservices/concourse-curl-resource,
+    secret_access_key: ((final_s3_secret_access_key)), tag: latest}
   type: docker-image
 resources:
 - name: input-git-nsx-t-gen-pipeline
   source:
+    access_key_id: ((final_s3_access_key_id))
     branch: master
+    bucket: ((final_s3_bucket))
+    endpoint: ((final_s3_endpoint))
     params: {disable_git_lfs: true}
+    secret_access_key: ((final_s3_secret_access_key))
     uri: https://github.com/sparameswaran/nsx-t-gen.git
   type: git
 - name: input-git-nsxt-ansible
-  source: {branch: master, uri: 'https://github.com/sparameswaran/nsxt-ansible'}
+  source: {access_key_id: ((final_s3_access_key_id)), branch: master, bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), secret_access_key: ((final_s3_secret_access_key)),
+    uri: 'https://github.com/sparameswaran/nsxt-ansible'}
   type: git
 - name: input-file-nsx-mgr-ova
-  source: {filename: ((nsx_mgr_ova)), skip_ssl_verification: true, url: ((nsx_image_webserver))/((nsx_mgr_ova))}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), filename: ((nsx_mgr_ova)), secret_access_key: ((final_s3_secret_access_key)),
+    skip_ssl_verification: true, url: ((nsx_image_webserver))/((nsx_mgr_ova))}
   type: file-url
 - name: input-file-nsx-ctrl-ova
-  source: {filename: ((nsx_controller_ova)), skip_ssl_verification: true, url: ((nsx_image_webserver))/((nsx_controller_ova))}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), filename: ((nsx_controller_ova)), secret_access_key: ((final_s3_secret_access_key)),
+    skip_ssl_verification: true, url: ((nsx_image_webserver))/((nsx_controller_ova))}
   type: file-url
 - name: input-file-nsx-edge-ova
-  source: {filename: ((nsx_edge_ova)), skip_ssl_verification: true, url: ((nsx_image_webserver))/((nsx_edge_ova))}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), filename: ((nsx_edge_ova)), secret_access_key: ((final_s3_secret_access_key)),
+    skip_ssl_verification: true, url: ((nsx_image_webserver))/((nsx_edge_ova))}
   type: file-url
 - name: input-file-ovftool
-  source: {filename: ((ovftool_image)), skip_ssl_verification: true, url: ((nsx_image_webserver))/((ovftool_image))}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), filename: ((ovftool_image)), secret_access_key: ((final_s3_secret_access_key)),
+    skip_ssl_verification: true, url: ((nsx_image_webserver))/((ovftool_image))}
   type: file-url
 - name: input-docker-nsxedgegen-nsx-t-gen-worker-latest-docker
-  source: {repository: nsxedgegen/nsx-t-gen-worker, tag: latest}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), repository: nsxedgegen/nsx-t-gen-worker, secret_access_key: ((final_s3_secret_access_key)),
+    tag: latest}
   type: docker-image
 - name: output-git-nsx-t-gen-pipeline
-  source: {access_key_id: my_access_id, bucket: offline-bucket, endpoint: 'http://10.85.24.5:9000/',
-    regexp: install-nsx-t-run-1/resources/git/nsx-t-gen-pipeline-tar(.*).tgz, secret_access_key: my_secret_access_key}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), regexp: install-nsx-t-run-1/resources/git/nsx-t-gen-pipeline-tar(.*).tgz,
+    secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: output-git-nsxt-ansible
-  source: {access_key_id: my_access_id, bucket: offline-bucket, endpoint: 'http://10.85.24.5:9000/',
-    regexp: install-nsx-t-run-1/resources/git/nsxt-ansible-tar(.*).tgz, secret_access_key: my_secret_access_key}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), regexp: install-nsx-t-run-1/resources/git/nsxt-ansible-tar(.*).tgz,
+    secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: output-file-nsx-mgr-ova
-  source: {access_key_id: my_access_id, bucket: offline-bucket, endpoint: 'http://10.85.24.5:9000/',
-    regexp: install-nsx-t-run-1/resources/file/nsx-mgr-ova-*-(.*), secret_access_key: my_secret_access_key}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), regexp: install-nsx-t-run-1/resources/file/nsx-mgr-ova-*-(.*),
+    secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: output-file-nsx-ctrl-ova
-  source: {access_key_id: my_access_id, bucket: offline-bucket, endpoint: 'http://10.85.24.5:9000/',
-    regexp: install-nsx-t-run-1/resources/file/nsx-ctrl-ova-*-(.*), secret_access_key: my_secret_access_key}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), regexp: install-nsx-t-run-1/resources/file/nsx-ctrl-ova-*-(.*),
+    secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: output-file-nsx-edge-ova
-  source: {access_key_id: my_access_id, bucket: offline-bucket, endpoint: 'http://10.85.24.5:9000/',
-    regexp: install-nsx-t-run-1/resources/file/nsx-edge-ova-*-(.*), secret_access_key: my_secret_access_key}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), regexp: install-nsx-t-run-1/resources/file/nsx-edge-ova-*-(.*),
+    secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: output-file-ovftool
-  source: {access_key_id: my_access_id, bucket: offline-bucket, endpoint: 'http://10.85.24.5:9000/',
-    regexp: install-nsx-t-run-1/resources/file/ovftool-*-(.*), secret_access_key: my_secret_access_key}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), regexp: install-nsx-t-run-1/resources/file/ovftool-*-(.*),
+    secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: output-docker-nsxedgegen-nsx-t-gen-worker-latest-docker
-  source: {access_key_id: my_access_id, bucket: offline-bucket, endpoint: 'http://10.85.24.5:9000/',
-    regexp: install-nsx-t-run-1/resources/docker/nsxedgegen-nsx-t-gen-worker-latest-docker.(.*),
-    secret_access_key: my_secret_access_key}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), regexp: install-nsx-t-run-1/resources/docker/nsxedgegen-nsx-t-gen-worker-latest-docker.(.*),
+    secret_access_key: ((final_s3_secret_access_key))}
   type: s3

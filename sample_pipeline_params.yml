@@ -4,3 +4,13 @@ s3_bucket: offline-bucket
 s3_access_key_id: my_access_id
 s3_secret_access_key: my_secret_access_key
 iaas: vsphere
+
+# The following variables would be used if one wants to kick off the generated blob-upload or offline pipeline
+# (assuming paramertization of the generated pipelines matches these variables)
+# These can be different for blobstore (having online access) and offline runs (purely offline but with bits copied over)
+final_s3_endpoint: http://10.85.24.5:9000/
+final_s3_bucket: offline-bucket
+final_s3_access_key_id: my_access_id
+final_s3_secret_access_key: my_secret_access_key
+
+# Any additional parameters or use separate parameter files...
