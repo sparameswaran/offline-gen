@@ -48,26 +48,39 @@ Parameters specified in the pipelines would be preseved as is.
 # Stages
 
 * Register the `kickoff-offline-gen-pipeline.yml` pipeline
-  * ![](images/kickoff-init.png)
-  *Init*
+  * Init
+  ![](images/kickoff-init.png)
 * Execution of it would create a new pipeline for handling full generation of the blobstore upload and offlined pipelines.
-  * [kickoff-execute](images/kickoff-execute.png)
-  * [start-full-generation](images/full-generation-auto.png)
-  * [kickoff-complete](images/full-generation-registered.png)
-  * [full-generation](images/full-generation.png)
+  * Kickoff Execute
+  ![](images/kickoff-execute.png)
+  * Start of registering full Generation
+  ![](images/full-generation-auto.png)
+  * Kickoff Complete
+  ![](images/full-generation-registered.png)
+  * Full Generation of upload and offline pipelines
+  ![](images/full-generation.png)
 * S3 buckets would be filled with requisite files required for the offline-gen to function (parameter files, settings)
-    * [s3-blobstore](images/minio-resources.png)
-    * [s3-blobstore-structure](images/blobstore-structure.png)
-    * [s3-blobstore-offline-pipelines](images/offlinegen-output.png)
+    * S3 Blobstore
+    ![](images/minio-resources.png)
+    * S3 Blobstore Structure
+    ![](images/blobstore-structure.png)
+    * S3 Blobstore upload and Offline pipelines
+    ![](images/offlinegen-output.png)
 * Blobstore upload pipeline would be saved along with the offline version of the target pipeline
-    * [s3-blobstore-pivnet](images/pivnet-tarball.png)
-    * [s3-blobstore-docker](images/docker-images.png)
+    * S3 Blobstore Pivnet Tiles
+    ![](images/pivnet-tarball.png)
+    * S3 Blobstore Docker images
+    ![](images/docker-images.png)
 * Running the blobstore upload pipeline would then upload all resources/docker images/files/pivnet tiles/stemcells etc. into the S3 blobstore.
-  * [blobstore-upload-pipeline](images/parallel-kickoff-blobupload.png)
-  * [blobstore-upload](images/blobupload.png)
+  * Blobstore Upload Pipeline
+  ![](images/parallel-kickoff-blobupload.png)
+  * Blobstore Upload
+  ![](images/blobupload.png)
 * Running the offlined pipeline would execute the same jobs and tasks as the original pipeline while referring to the resources saved in the S3 Blobstore from previous step.
-  * [offline-pipeline](images/offline-run.png)
-  * [offline-pipeline-resources](images/install-in-offlinemode.png)
+  * Offline Pipeline
+  ![](images/offline-run.png)
+  * Offline Pipeline Resources
+  ![](images/install-in-offlinemode.png)
 
 # Running offline-gen directly from command line
 
