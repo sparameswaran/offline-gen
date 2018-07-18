@@ -64,24 +64,25 @@ Parameters specified in the pipelines would be preseved as is.
     <div><img src="images/minio-resources.png" width="400"/></div>
     * S3 Blobstore Structure
     <div><img src="images/blobstore-structure.png" width="300"/></div>
-    * S3 Blobstore upload and Offline pipelines
-    <div><img src="images/offlinegen-output.png" width="300"/></div>
 
 * Blobstore upload pipeline would be saved along with the offline version of the target pipeline
-    * S3 Blobstore Pivnet Tiles
-    <div><img src="images/pivnet-tarball.png" width="400"/></div>
-    * S3 Blobstore Docker images
-    <div><img src="images/docker-images.png" width="400"/></div>
+    * S3 Blobstore Upload and Offline pipelines
+    <div><img src="images/offlinegen-output.png" width="300"/></div>
+
 * Running the blobstore upload pipeline would then upload all resources/docker images/files/pivnet tiles/stemcells etc. into the S3 blobstore.
   * Blobstore Upload Pipeline
   <div><img src="images/parallel-kickoff-blobupload.png" width="400"/></div>
   * Blobstore Upload
   <div><img src="images/blobupload.png" width="400"/></div>
+  * S3 Blobstore Pivnet Tiles
+  <div><img src="images/pivnet-tarball.png" width="400"/></div>
+  * S3 Blobstore Docker images
+  <div><img src="images/docker-images.png" width="400"/></div>
 
-* Running the offlined pipeline would execute the same jobs and tasks as the original pipeline while referring to the resources saved in the S3 Blobstore from previous step.
+* Running the offlined version of target pipeline would execute the same jobs and tasks as the original pipeline, while referring to the resources saved in the S3 Blobstore from previous step.
   * Offline Pipeline
   <div><img src="images/offline-run.png" width="400"/></div>
-  * Offline Pipeline Resources
+  * Offline Pipeline Resource retrieval
   <div><img src="images/install-in-offlinemode.png" width="400"/></div>
 
 # Running offline-gen directly from command line
