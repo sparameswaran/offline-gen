@@ -204,23 +204,23 @@ def save_kickoff_pipeline(git_input_resources, git_only_pipeline_filename):
 	try:
 		context = {}
 		resource_context = {
-	        'context': context,
+			'context': context,
 			'source_resource_types': [],
-	        #'process_resource_jobs': process_resource_jobs,
+			#'process_resource_jobs': process_resource_jobs,
 			'offline_gen_param_file_source': offlinegen_param_file_source,
 			'pipeline_param_file_source': pipeline_param_file_source,
 			'git_resources': git_input_resources,
 			'target_pipeline_branch': handler_config['target_pipeline_branch'],
-	    	'target_pipeline_uri': handler_config['target_pipeline_uri'],
+			'target_pipeline_uri': handler_config['target_pipeline_uri'],
 			'analysis_results_filesource': analysis_results_filesource,
 			'blobstore_upload_pipeline_source': blobstore_upload_pipeline_source,
 			'offline_pipeline_source': offline_pipeline_source
-	    }
+		}
 
 		git_only_pipeline = template.render_as_config(
-	        os.path.join('.', 'blobstore/full_offline_generation.v1.yml' ),
-	        resource_context
-	    )
+			os.path.join('.', 'blobstore/full_offline_generation.v1.yml' ),
+			resource_context
+		)
 		write_config(git_only_pipeline, git_only_pipeline_filename)
 
 		print ''
@@ -348,19 +348,19 @@ def save_blobuploader_pipeline(input_resources, output_resources, blobstore_uplo
 	try:
 		context = {}
 		resource_context = {
-	        'context': context,
+			'context': context,
 			'source_resource_types': src_pipeline.get('resource_types'),
-	        #'process_resource_jobs': process_resource_jobs,
+			#'process_resource_jobs': process_resource_jobs,
 			'resources': src_pipeline['resources'],
 			'final_input_resources': input_resources,
 			'final_output_resources': output_resources,
-	        'files': []
-	    }
+			'files': []
+		}
 
 		blobstore_upload_pipeline = template.render_as_config(
-	        os.path.join('.', 'blobstore/blobstore_upload_pipeline.v1.yml' ),
-	        resource_context
-	    )
+			os.path.join('.', 'blobstore/blobstore_upload_pipeline.v1.yml' ),
+			resource_context
+		)
 		write_config(blobstore_upload_pipeline, blobstore_upload_pipeline_filename)
 
 		print ''
@@ -839,9 +839,9 @@ def handle_aggregated_plan_entry(plan, aggregate_key, original_aggregate, alias_
 				original_get_resource_name = nested_entry_value
 
 				# Rare cases where the get is tagged as pivnet-prodcut
-			    # - get: pivnet-product
-			    #   resource: pivotal-container-service
-			    #   params: {globs: ["pivotal-container-service*.pivotal"]}
+				# - get: pivnet-product
+				#   resource: pivotal-container-service
+				#   params: {globs: ["pivotal-container-service*.pivotal"]}
 
 				matching_resource = offline_resource_map.get(original_get_resource_name)
 				if matching_resource is None:
@@ -918,8 +918,8 @@ def handle_get_resource_details(get_resource_name, job_tasks_reference):
 
 		# Sample job_tasks_ref
 		# {'standalone-install-nsx-t': [{'file': 'nsx-t-gen-pipeline/tasks/install-nsx-t/task.yml',
-   	 	#                                'git_resource': 'nsx-t-gen-pipeline',
-   	 	#                                'task': 'install-nsx-t'}]},
+		#                                'git_resource': 'nsx-t-gen-pipeline',
+		#                                'task': 'install-nsx-t'}]},
 
 		docker_image_tarball_name = None
 		for job_task in job_tasks_reference[job_name]:
@@ -1042,6 +1042,7 @@ def inline_task_details(plan, alias_resource_map, ref_map_target_job_name, saved
 	new_task_outputs = original_task_outputs if original_task_outputs is not None else []
 
 	tarball_resources_to_extract_map = {}
+	file_resources_to_move_map = {}
 
 	#print '\n## Task: {} Original Task Inputs: {} and original_task_script: {}\n'.format(given_task_name,
 	# 														original_task_inputs, original_task_script)
@@ -1075,13 +1076,17 @@ def inline_task_details(plan, alias_resource_map, ref_map_target_job_name, saved
 			original_underlying_resource = alias_resource_map[aliased_resource_name]
 			if original_underlying_resource is not None:
 				matching_tarballed_resource = offline_resource_map.get(original_underlying_resource + '-tarball')
+
 				if matching_tarballed_resource is not None:
 					new_task_inputs.append(  { 'name' : matching_tarballed_resource['name'] } )
 					new_task_outputs.append( { 'name' : aliased_resource_name } )
 					# Map the aliased name against registered resource name
 					tarball_resources_to_extract_map[aliased_resource_name ] = original_underlying_resource
+
 				else:
 					new_task_inputs.append( { 'name': original_underlying_resource } )
+					new_task_outputs.append( { 'name' : aliased_resource_name } )
+					file_resources_to_move_map[aliased_resource_name] = original_underlying_resource
 			else:
 				# Give up as we are unable to locate any matching direct or tarballed or aliased resource
 				print '\n## Unable to find associated Resource for : {}'.format(original_input['name'])
@@ -1090,6 +1095,7 @@ def inline_task_details(plan, alias_resource_map, ref_map_target_job_name, saved
 	plan['task'] = 'offlined-' + plan['task']
 	plan['config']['inputs'] = normalize_list(new_task_inputs)
 	plan['config']['run'] = create_full_run_command(tarball_resources_to_extract_map,
+													file_resources_to_move_map,
 													matching_tarballed_resource,
 													original_task_script)
 
@@ -1122,6 +1128,7 @@ def handle_preinlined_task_details(plan, saved_plan_inputs):
 	new_task_outputs = original_task_outputs if original_task_outputs is not None else []
 
 	tarball_resources_to_extract_map = {}
+	file_resources_to_move_map = {}
 	offline_resource_map = create_resource_map(offline_pipeline['resources'])
 
 	for original_input in original_task_inputs:
@@ -1164,6 +1171,8 @@ def handle_preinlined_task_details(plan, saved_plan_inputs):
 					tarball_resources_to_extract_map[aliased_resource_name ] = original_underlying_resource
 				else:
 					new_task_inputs.append( { 'name': original_underlying_resource } )
+					new_task_outputs.append( { 'name' : aliased_resource_name } )
+					file_resources_to_move_map[aliased_resource_name] = original_underlying_resource
 
 			else:
 				# Give up as we are unable to locate any matching direct or tarballed or aliased resource
@@ -1179,6 +1188,7 @@ def handle_preinlined_task_details(plan, saved_plan_inputs):
 										'source' : matching_tarballed_resource['source']
 									}
 	plan['config']['run'] = create_full_run_command(tarball_resources_to_extract_map,
+													file_resources_to_move_map,
 													matching_tarballed_resource,
 													original_task_script)
 
@@ -1187,7 +1197,7 @@ def handle_preinlined_task_details(plan, saved_plan_inputs):
 
 	#print 'Final inlined task plan: {}'.format(plan)
 
-def create_full_run_command(dependent_resources_map, ignore_resource, task_script):
+def create_full_run_command(tarball_dependent_resources_map, file_resources_to_move_map, ignore_resource, task_script):
 
 	run_command_str = ''
 	run_command_str_list = list(run_command_str)
@@ -1198,10 +1208,16 @@ def create_full_run_command(dependent_resources_map, ignore_resource, task_scrip
 	run_command_str_list.append('mv ${file} ${new_file};')
 	run_command_str_list.append('done;')
 	run_command_str_list.append('ls -R;')
-	for resource in dependent_resources_map.keys():
+
+	for resource in tarball_dependent_resources_map.keys():
 		if ignore_resource is None or (ignore_resource['name'] not in resource):
 			run_command_str_list.append('cd %s; tar -zxf ../%s-tarball/*.tgz; cd ..;'
-					% (resource, dependent_resources_map[resource]))
+					% (resource, tarball_dependent_resources_map[resource]))
+
+	for resource in file_resources_to_move_map.keys():
+		if ignore_resource is None or (ignore_resource['name'] not in resource):
+			run_command_str_list.append('cd %s; mv ../%s/* .; cd ..;'
+					% (resource, file_resources_to_move_map[resource]))
 
 	run_command_str_list.append('echo Starting main task execution!!;')
 	run_command_str_list.append(task_script)
@@ -1257,15 +1273,15 @@ def handle_docker_image(resource):
 
 	context = {}
 	resource_context = {
-        'context': context,
-        'resource': resource,
-        'files': []
-    }
+		'context': context,
+		'resource': resource,
+		'files': []
+	}
 
 	docker_job_resource = template.render_as_config(
-        os.path.join('.', 'blobstore/handle_docker_image.yml' ),
-        resource_context
-    )
+		os.path.join('.', 'blobstore/handle_docker_image.yml' ),
+		resource_context
+	)
 
 	# Register the in/out resources
 	add_inout_resources(resource)
@@ -1293,17 +1309,17 @@ def handle_git_resource(resource, src_pipeline, task_list):
 
 	context = {}
 	resource_context = {
-        'context': context,
-        'resource': resource,
+		'context': context,
+		'resource': resource,
 		'task_list': task_list_arr,
 		'blobstore_source' : bucket_config,
-        'files': []
-    }
+		'files': []
+	}
 
 	git_job_resource = template.render_as_config(
-        os.path.join('.', 'blobstore/handle_git_resource.yml' ),
-        resource_context
-    )
+		os.path.join('.', 'blobstore/handle_git_resource.yml' ),
+		resource_context
+	)
 
 	# Register the in/out resources
 	add_inout_resources(resource)
@@ -1330,15 +1346,15 @@ def handle_pivnet_tile_resource(resource):
 
 	context = {}
 	resource_context = {
-        'context': context,
-        'resource': resource,
-        'files': []
-    }
+		'context': context,
+		'resource': resource,
+		'files': []
+	}
 
 	pivnet_tile_job_resource = template.render_as_config(
-        os.path.join('.', 'blobstore/handle_pivnet_tile.yml' ),
-        resource_context
-    )
+		os.path.join('.', 'blobstore/handle_pivnet_tile.yml' ),
+		resource_context
+	)
 
 	# Register the default in/out resources
 	add_inout_resources(resource)
@@ -1379,15 +1395,15 @@ def handle_pivnet_non_tile_resource(resource):
 
 	context = {}
 	resource_context = {
-        'context': context,
-        'resource': resource,
-        'files': []
-    }
+		'context': context,
+		'resource': resource,
+		'files': []
+	}
 
 	non_pivnet_job_resource = template.render_as_config(
-        os.path.join('.', 'blobstore/handle_non_pivnet_tile.yml' ),
-        resource_context
-    )
+		os.path.join('.', 'blobstore/handle_non_pivnet_tile.yml' ),
+		resource_context
+	)
 
 	# Register the in/out resources
 	add_inout_resources(resource)
@@ -1407,8 +1423,8 @@ def handle_s3_resource(resource):
 	  default_bucket_config['access_key_id'] \
 	  and resource['source']['secret_access_key'] == \
 	  default_bucket_config['secret_access_key']:
-	  	# Just add to the offline resource list
-	  	offline_pipeline['resources'].append(resource)
+		# Just add to the offline resource list
+		offline_pipeline['resources'].append(resource)
 		return None
 
 	# Requires modification
@@ -1417,15 +1433,15 @@ def handle_s3_resource(resource):
 
 	context = {}
 	resource_context = {
-        'context': context,
-        'resource': resource,
-        'files': []
-    }
+		'context': context,
+		'resource': resource,
+		'files': []
+	}
 
 	s3_job_resource = template.render_as_config(
-        os.path.join('.', 'blobstore/handle_file_resource.yml' ),
-        resource_context
-    )
+		os.path.join('.', 'blobstore/handle_file_resource.yml' ),
+		resource_context
+	)
 
 	# Register the in/out resources
 	add_inout_resources(resource)
@@ -1440,15 +1456,15 @@ def handle_default_resource(resource):
 
 	context = {}
 	resource_context = {
-        'context': context,
-        'resource': resource,
-        'files': []
-    }
+		'context': context,
+		'resource': resource,
+		'files': []
+	}
 
 	file_job_resource = template.render_as_config(
-        os.path.join('.', 'blobstore/handle_file_resource.yml' ),
-        resource_context
-    )
+		os.path.join('.', 'blobstore/handle_file_resource.yml' ),
+		resource_context
+	)
 
 	# Register the in/out resources
 	add_inout_resources(resource)
@@ -1489,8 +1505,8 @@ def write_config(content, destination, useNoAliasDumper=True):
 		sys.exit(1)
 
 class NoAliasDumper(yaml.Dumper):
-    def ignore_aliases(self, data):
-        return True
+	def ignore_aliases(self, data):
+		return True
 
 if __name__ == '__main__':
 	main()
