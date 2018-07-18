@@ -1219,6 +1219,8 @@ def create_full_run_command(tarball_dependent_resources_map, file_resources_to_m
 			run_command_str_list.append('cd %s; mv ../%s/* .; cd ..;'
 					% (resource, file_resources_to_move_map[resource]))
 
+	run_command_str_list.append("for token in $(env | grep '=' | grep \"^[A-Z]*\" | grep '=null' | sed -e 's/=.*//g');")
+	run_command_str_list.append('do export ${token}="";  done;')
 	run_command_str_list.append('echo Starting main task execution!!;')
 	run_command_str_list.append(task_script)
 
