@@ -17,26 +17,6 @@ Creates two separate pipelines that handle:
   * Non-Pivnet Tiles (like Ops Mgr Ova file)
 * Offline Pipeline that uses only offlined version of resources saved in S3 Blobstore
 
-The generated offline and blobstore pipelines would refer to hard coded s3 blobstore details used by the offline-gen tool to store and save artifacts.
-
-Once the blobs have been saved into a blobstore, these can be exported and imported into a different s3 blobstore. The generated pipelines would be saved under <run-id>/resources/offline-gen/<offline|blobstore-upload>-<pipeline-name>.yml
-<div><img src="images/offlinegen-output.png" width="450"/></div>
-
-The generated offline pipeline would then have to be updated to reflect the new s3 blobstore from previous blobstore that was used during the offline pipeline generation and blob upload pipeline execution.
-
-Sample generated offlined pipeline refers to the s3 blobstore used by offline-gen:
-```
-source: {access_key_id: my_access_id, bucket: offline-bucket, endpoint: 'http://10.85.24.5:9000/',
-    regexp: test1/resources/docker/czero-cflinuxfs2-latest-docker.(.*), secret_access_key: my_secret_access_key}
-type: s3
-```
-Change the values for all s3 source reference to parameterized values that can be overridden during pipeline execution across the offline pipeline:
-```
-source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)), endpoint: ((final_s3_endpoint)),
-  regexp: test1/resources/docker/czero-cflinuxfs2-latest-docker.(.*), secret_access_key: ((final_s3_secret_access_key))}
-type: s3
-```
-
 # Running as a Concourse pipeline
 
 Register the offline-gen pipeline with Concourse (requires basic auth to kick off other dependent pipelines). A Blobstore upload pipeline and offline versioned form of the actual pipeline would be generated.
