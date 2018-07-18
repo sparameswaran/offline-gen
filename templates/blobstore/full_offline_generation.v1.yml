@@ -41,26 +41,26 @@ jobs:
         path: /bin/bash
     task: generate-offline
   - aggregate:
-    - put: analysis-results-file
+    - put: analysis-results-file-for-((target_pipeline_name))
       params: { file: offline-gen-output/analysis-* }
-    - put: offline-gen-blobstore-upload-file
+    - put: blobstore-upload-for-((target_pipeline_name))-pipeline
       params: { file: offline-gen-output/blobstore-* }
-    - put: offline-gen-offline-pipeline-file
+    - put: offline-pipeline-for-((target_pipeline_name))
       params: { file: offline-gen-output/offline-* }
 
-- name: start-full-generation-for-((target_pipeline_name))
+- name: start-blob-upload-for-((target_pipeline_name))
   plan:
   - aggregate:
     - get: pipeline-param-file
     - get: offline-gen-param-file
-    - get: offline-gen-blobstore-upload-file
+    - get: blobstore-upload-for-((target_pipeline_name))-pipeline
       trigger: true
   - put: blobstore-upload-for-((target_pipeline_name))-pipeline
     params:
       pipelines:
       - name: blob-upload-for-((target_pipeline_name))-pipeline
         team: ((concourse_team))
-        config_file: offline-gen-blobstore-upload-file/*.yml
+        config_file: blobstore-upload-for-((target_pipeline_name))-pipeline/*.yml
         vars_files:
         - offline-gen-param-file/offline-gen-param*
         - pipeline-param-file/pipeline-param*
@@ -103,15 +103,15 @@ resources:
   type: s3
   source: {{ pipeline_param_file_source }}
 
-- name: analysis-results-file
+- name: analysis-results-file-for-((target_pipeline_name))
   type: s3
   source: {{ analysis_results_filesource }}
 
-- name: offline-gen-blobstore-upload-file
+- name: blobstore-upload-for-((target_pipeline_name))-pipeline
   type: s3
   source: {{ blobstore_upload_pipeline_source }}
 
-- name: offline-gen-offline-pipeline-file
+- name: offline-pipeline-for-((target_pipeline_name))
   type: s3
   source: {{ offline_pipeline_source }}
 
