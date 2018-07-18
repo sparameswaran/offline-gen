@@ -139,4 +139,4 @@ Requires python libraries specified in requirements.txt
 
 * Requires Concourse install to use basic auth (to auto-register and execute dynamically generated concourse pipelines)
 * The blobstore upload portion requires access to online resources (to pull github repos, docker images, pivnet tiles etc) as well as Pivotal Network Token to download tiles/products.
-* Download of parameterized resources like github repos with dynamic branch specified as parameter requires the kickoff portion to have access to the github branch as parameter. For tile/prduct versions requires the parameters to be supplied during actual execution, these need to be supplied during blobstore upload pipeline execution to save the matching versions into S3 blobstore.
+* Download of parameterized resources like github repos with dynamic branch specified as parameter requires the kickoff portion to have access to the github branch as parameter. For tile or product that requires version parameters to be supplied during actual execution, these need to be supplied during blobstore upload pipeline execution to save the correct matching versions into S3 blobstore.
