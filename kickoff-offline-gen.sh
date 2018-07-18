@@ -40,6 +40,22 @@ export OFFLINE_GEN_INPUT_PARAM_FILE=offline-gen-input-params.yml
 # offline_gen_s3_access_key_id: &my_s3_access_key_id my_access_id                    # EDIT ME
 # offline_gen_s3_secret_access_key: &my_s3_secret_access_key my_secret_access_key    # EDIT ME
 #
+# # Change parameters in final generated offline pipeline s3 source to be s3_blobstore_parameterized_tokens
+# # for porting across S3 blobstore_source. This will allow replacement of actual s3 configs to parameterized list
+# # Sample generated S3 source
+# #source: {access_key_id: my_access_id, bucket: offline-bucket, endpoint: 'http://10.85.24.5:9000/',
+# #    regexp: test1/resources/docker/czero-cflinuxfs2-latest-docker.(.*), secret_access_key: my_secret_access_key}
+# # Modified to
+# #source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)), endpoint: ((final_s3_endpoint)),
+# #  regexp: test1/resources/docker/czero-cflinuxfs2-latest-docker.(.*), secret_access_key: ((final_s3_secret_access_key))}
+# #
+# s3_blobstore_parameterized_tokens:
+#   endpoint: final_s3_endpoint
+#   bucket: final_s3_bucket
+#   access_key_id: final_s3_access_key_id
+#   secret_access_key: final_s3_secret_access_key
+#   # Add any additional parameter that eneds to be overriden from generated source
+#
 # # S3 blobstore for actual generated pipelines
 # s3_blobstore:
 #   endpoint: *my_s3_endpoint

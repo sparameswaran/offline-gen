@@ -326,6 +326,7 @@ def handle_pipelines():
 def save_offline_pipeline(offline_pipeline_filename):
 	try:
 		handle_offline_tasks()
+		handle_inline_parameterization_of_s3blobstore(offline_pipeline)
 		write_config(offline_pipeline, offline_pipeline_filename, useNoAliasDumper=False)
 		print 'Created offline pipeline: ' + offline_pipeline_filename
 	except Exception as e:
@@ -334,6 +335,30 @@ def save_offline_pipeline(offline_pipeline_filename):
 		print >> sys.stderr, 'Error occured.'
 		sys.exit(1)
 
+# Change parameters in final generated offline pipeline s3 source to be s3_blobstore_parameterized_tokens
+# for porting across S3 blobstore_source. This will allow replacement of actual s3 configs to parameterized list
+# Sample generated S3 source
+#source: {access_key_id: my_access_id, bucket: offline-bucket, endpoint: 'http://10.85.24.5:9000/',
+#    regexp: test1/resources/docker/czero-cflinuxfs2-latest-docker.(.*), secret_access_key: my_secret_access_key}
+# Modified to
+#source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)), endpoint: ((final_s3_endpoint)),
+#  regexp: test1/resources/docker/czero-cflinuxfs2-latest-docker.(.*), secret_access_key: ((final_s3_secret_access_key))}
+def handle_inline_parameterization_of_s3blobstore(content):
+	s3blobstore_replacement_token_map = handler_config.get('s3_blobstore_parameterized_tokens')
+	if s3blobstore_replacement_token_map is None:
+		return
+
+	if type(content) == list:
+		for item in content:
+			handle_inline_parameterization_of_s3blobstore(item)
+	elif type(content) == dict:
+		for key in content.keys():
+			if key == 'source':
+				source = content[key]
+				for key in s3blobstore_replacement_token_map:
+					source[key] = '((%s))' % (s3blobstore_replacement_token_map[key])
+			else:
+				handle_inline_parameterization_of_s3blobstore(content[key])
 
 def save_blobuploader_pipeline(input_resources, output_resources, blobstore_upload_pipeline_filename):
 
@@ -1506,7 +1531,7 @@ def write_config(content, destination, useNoAliasDumper=True):
 	try:
 		with open(destination, 'w') as output_file:
 			if useNoAliasDumper:
-				yaml.dump(content, output_file,  Dumper=NoAliasDumper)
+				yaml.dump(content, output_file,  Dumper=dumper)
 			else:
 				yaml.dump(content, output_file)
 
