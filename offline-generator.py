@@ -1275,7 +1275,7 @@ def handle_git_resource(resource, src_pipeline, task_list):
 
 	res_name = resource['name']
 	resource['base_type'] = 'git'
-	resource['regexp'] = '%s/%s/%s/%s-(.*).tgz' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, 'git', resource['name'])
+	resource['regexp'] = '%s/%s/%s/%s-tar(.*).tgz' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, 'git', resource['name'])
 
 	matching_task_files = []
 	for task_file in task_list:
