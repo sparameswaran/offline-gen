@@ -18,7 +18,7 @@ Creates two separate pipelines that handle:
 * Offline Pipeline that uses only offlined version of resources saved in S3 Blobstore
 
 Offline-gen Design
-<div><img src="images/offline-gen-arch.png" width="450"/></div>
+<div><img src="images/offline-gen-arch.png" width="500"/></div>
 
 The tool requires a s3 compatible blobstore like minio to be running and accessible from the concourse pipelines.
 
@@ -151,7 +151,7 @@ Edit the input param settings to use the minio access keys.
 
 # Notes
 * Make sure the `run_name` in the main input.yml for offline-gen is unique to distinguish across different pipelines/runs. Using the same `run_name` can lead to conflicts or collision of values/folders/files.
-* Automatic run of the blobstore upload pipeline might fail if the supplied params are not incomplete. Best to save the pipeline and run it separately with the right parameters so correctly versioned artifacts can be saved into the S3 blobstore.
+* Automatic run of the blobstore upload pipeline might fail if the supplied params are incomplete. Best to save the pipeline and run it separately with the right parameters so correctly versioned artifacts can be saved into the S3 blobstore.
 
 # Running offline-gen directly from command line
 
@@ -206,6 +206,6 @@ Requires python libraries specified in requirements.txt
 # Limitations
 
 * Requires Concourse install to use basic auth (to auto-register and execute dynamically generated concourse pipelines)
-* The blobstore upload portion requires access to online resources (to pull github repos, docker images, pivnet tiles etc) as well as Pivotal Network Token to download tiles/products. So, the automatic run of the blobstore upload pipeline might fail if the supplied params are not incomplete. Best to save the pipeline and run it separately with the right parameters so correctly versioned artifacts can be saved into the S3 blobstore.
+* The blobstore upload portion requires access to online resources (to pull github repos, docker images, pivnet tiles etc) as well as Pivotal Network Token to download tiles/products. So, the automatic run of the blobstore upload pipeline might fail if the supplied params are incomplete. Best to save the pipeline and run it separately with the right parameters so correctly versioned artifacts can be saved into the S3 blobstore.
 * Use unique `run_name` id to distinguish pipelines, artifacts across various runs (as already mentioned).
 * Download of parameterized resources like github repos with dynamic branch specified as parameter requires the kickoff portion to have access to the github branch as parameter. For tile or product that requires version parameters to be supplied during actual execution, these need to be supplied during blobstore upload pipeline execution to save the correct matching versions into S3 blobstore.
