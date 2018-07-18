@@ -53,8 +53,8 @@ fly -t $CONCOURSE_TARGET set-pipeline \
     -c $OFFLINE_GEN_PIPELINE \
     -y "offline_gen_yaml_input_params=$(cat $OFFLINE_GEN_INPUT_PARAM_FILE)" \
     -y "pipeline_yaml_input_params=$(cat $TARGET_PIPELINE_INPUT_PARAM_FILE)" \
-    -l input.yml \
-    -l extra-params.yml
+    -l $OFFLINE_GEN_INPUT_PARAM_FILE \
+    -l $TARGET_PIPELINE_INPUT_PARAM_FILE
 ```
 
 Use the `sample_input.yml` to create a new input file that would contain configs for talking to a S3 Blobstore, name, branch, github repo of the target pipeline and associated pipeline that needs to be offlined. The pipeline-params file can contain parameter values pertaining to the target pipeline itself (IaaS/branch etc).
