@@ -43,7 +43,7 @@ jobs:
         platform: linux
         run:
           args:
-            - -exc
+            - -ec
             - |
                 echo "Exporting {{ resource['name'] }} docker image";
                 mkdir export-directory;
@@ -71,7 +71,7 @@ jobs:
         platform: linux
         run:
           args:
-          - -exc
+          - -ec
           - |
               cd input-{{ resource['base_type'] }}-{{ resource['name'] }}
               tar cfz ../output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-tarball.tgz .
@@ -94,7 +94,7 @@ jobs:
         platform: linux
         run:
           args:
-          - -exc
+          - -ec
           - |
               echo \"Copying {{ resource['name'] }} bits\"
               rm input-{{ resource['base_type'] }}-{{ resource['name'] }}/version input-{{ resource['base_type'] }}-{{ resource['name'] }}/metadata*
@@ -117,7 +117,7 @@ jobs:
         platform: linux
         run:
           args:
-          - -exc
+          - -ec
           - |
               echo "Copying {{ resource['name'] }} tile bits"
               TILE_DIRECTORY_PATH=./input-{{ resource['base_type'] }}-{{ resource['name'] }}
@@ -173,7 +173,7 @@ jobs:
         platform: linux
         run:
           args:
-            - -exc
+            - -ec
             - |
                 echo "Copying {{ resource['name'] }} bits";
                 no_of_entries=$(ls input-{{ resource['base_type'] }}-{{ resource['name'] }} | wc -l)
@@ -251,7 +251,7 @@ jobs:
       platform: linux
       run:
         args:
-          - -exc
+          - -ec
           - |
               echo "Exporting {{ resource['name'] }} docker image";
               mkdir export-directory;
@@ -279,7 +279,7 @@ jobs:
       platform: linux
       run:
         args:
-        - -exc
+        - -ec
         - |
             cd input-{{ resource['base_type'] }}-{{ resource['name'] }}
             tar cfz ../output-{{ resource['base_type'] }}-{{ resource['name'] }}/{{ resource['name'] }}-tarball.tgz .
@@ -302,7 +302,7 @@ jobs:
       platform: linux
       run:
         args:
-        - -exc
+        - -ec
         - |
             echo \"Copying {{ resource['name'] }}-{{ resource['base_type'] }} bits\"
             rm input-{{ resource['base_type'] }}-{{ resource['name'] }}/version input-{{ resource['base_type'] }}-{{ resource['name'] }}/metadata*
@@ -325,7 +325,7 @@ jobs:
       platform: linux
       run:
         args:
-        - -exc
+        - -ec
         - |
             echo "Copying {{ resource['name'] }} tile bits"
             TILE_DIRECTORY_PATH=./input-{{ resource['base_type'] }}-{{ resource['name'] }}
@@ -381,7 +381,7 @@ jobs:
       platform: linux
       run:
         args:
-          - -exc
+          - -ec
           - |
               echo "Copying {{ resource['name'] }} bits";
               no_of_entries=$(ls input-{{ resource['base_type'] }}-{{ resource['name'] }} | wc -l)

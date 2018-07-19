@@ -84,11 +84,9 @@ def main():
 
 	args = init()
 	input_config_file = args.input_yml if args.input_yml is not None else CONFIG_FILE
-	#print ' Git is True?? :{}'.format(args.git)
+
 	print 'General Settings from: {}\n'.format(input_config_file)
 
-	# repo_path=args.repo
-	# pipeline = args.pipeline
 	analysis_only = args.analyze
 	kickoff_only = args.kickoff
 
@@ -114,30 +112,6 @@ def main():
 		handle_docker_analysis_of_pipelines()
 	else:
 		handle_pipelines()
-
-
-# def create_offline_repo_converter_as_resource():
-# 	offline_gen_resource = { 'name': 'offline-gen-repo-converter'}
-# 	offline_gen_resource['type'] = 's3'
-# 	offline_gen_resource['source'] = copy.copy(default_bucket_config)
-# 	offline_gen_resource['source']['regexp'] = '%s/%s/%s.(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, 'offline-gen/utils/python/pipeline_repo_converter')
-#
-# 	return offline_gen_resource
-
-# def create_offline_stemcell_downloader_as_resource():
-# 	offline_gen_resource = { 'name': 'offline-gen-stemcell-downloader'}
-# 	offline_gen_resource['type'] = 's3'
-# 	offline_gen_resource['source'] = copy.copy(default_bucket_config)
-# 	offline_gen_resource['source']['regexp'] = '%s/%s/%s(.*).sh' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, 'offline-gen/utils/shell/find_and_download')
-#
-# 	return offline_gen_resource
-
-# def add_docker_image_as_resource(pipeline):
-# 	new_docker_resource = { 'name': 'test-ubuntu-docker'}
-# 	new_docker_resource['type'] = 'docker-image'
-# 	new_docker_resource['source'] = { 'repository' : 'ubuntu', 'tag' : '17.04' }
-# 	pipeline['resources'].append(new_docker_resource)
-# 	final_input_resources.append(new_docker_resource)
 
 def handle_docker_analysis_of_pipelines():
 	global src_pipeline, offline_pipeline
@@ -225,72 +199,6 @@ def save_kickoff_pipeline(git_input_resources, git_only_pipeline_filename):
 		print(traceback.format_exc())
 		print >> sys.stderr, 'Error occured.'
 		sys.exit(1)
-
-# def handle_git_only_pipeline_generation():
-# 	global src_pipeline
-#
-# 	print('Repo Path:     {}\nPipeline file: {}'.format(repo, pipeline))
-# 	src_pipeline = read_config(repo + '/' + pipeline )
-#
-# 	#print 'Got src pipeline: {}'.format(src_pipeline)
-# 	pipeline_name_tokens = pipeline.split('/')
-# 	target_pipeline_name = pipeline_name_tokens[len(pipeline_name_tokens) - 1]
-#
-# 	git_only_pipeline_filename= 'build-git-repos-' + target_pipeline_name
-#
-# 	try:
-# 		git_input_resources = handle_git_only_resources()
-# 		save_git_only_pipeline(	git_input_resources,
-# 								git_only_pipeline_filename
-# 							)
-#
-# 		print '\nFinished git_only pipeline generation!!\n\n'
-#
-# 	except Exception as e:
-# 		print('Error : {}'.format(e))
-# 		print(traceback.format_exc())
-# 		print >> sys.stderr, 'Error occured.'
-# 		sys.exit(1)
-#
-# def save_git_only_pipeline(git_input_resources, git_only_pipeline_filename):
-#
-# 	print 'Input git resources:{}'.format(git_input_resources)
-#
-# 	offlinegen_param_file_source = copy.copy(default_bucket_config)
-# 	pipeline_param_file_source = copy.copy(default_bucket_config)
-# 	build_git_repos_source = copy.copy(default_bucket_config)
-#
-# 	offlinegen_param_file_source['regexp'] = '%s/%s/offline-gen/offline-gen-params-*(.*).yml' % ( RUN_NAME, DEFAULT_RESOURCES_PATH)
-# 	pipeline_param_file_source['regexp'] = '%s/%s/offline-gen/pipeline-params-*(.*).yml' % ( RUN_NAME, DEFAULT_RESOURCES_PATH)
-# 	build_git_repos_source['regexp'] = '%s/%s/offline-gen/build-git-repos-*(.*).yml' % ( RUN_NAME, DEFAULT_RESOURCES_PATH)
-#
-# 	try:
-# 		context = {}
-# 		resource_context = {
-# 	        'context': context,
-# 			'source_resource_types': [],
-# 	        #'process_resource_jobs': process_resource_jobs,
-# 			'offlinegen_param_file_source': offlinegen_param_file_source,
-# 			'pipeline_param_file_source': pipeline_param_file_source,
-# 			'git_resources': git_input_resources,
-# 			'git_repos_source': build_git_repos_source
-# 	    }
-#
-# 		git_only_pipeline = template.render_as_config(
-# 	        os.path.join('.', 'blobstore/parse_git_repos.v1.yml' ),
-# 	        resource_context
-# 	    )
-# 		write_config(git_only_pipeline, git_only_pipeline_filename)
-#
-# 		print ''
-# 		print 'Created git only pipeline: ' + git_only_pipeline_filename
-# 	except Exception as e:
-# 		print('Error during git only pipeline generation : {}'.format(e))
-# 		print(traceback.format_exc())
-# 		print >> sys.stderr, 'Error occured.'
-# 		sys.exit(1)
-
-
 
 def handle_pipelines():
 	global src_pipeline, offline_pipeline
@@ -400,8 +308,6 @@ def save_blobuploader_pipeline(input_resources, output_resources, blobstore_uplo
 		print(traceback.format_exc())
 		print >> sys.stderr, 'Error occured.'
 		sys.exit(1)
-
-
 
 def analyze_pipeline_for_docker_images(pipeline_repo_path, target_pipeline):
 	global docker_image_analysis_map
@@ -633,7 +539,6 @@ def handle_git_only_resources():
 
 	print '\nFinished handling of all git only resource jobs\n'
 	return git_only_resources
-
 
 def find_match_in_list(list, name):
 	for entry in list:
@@ -1128,7 +1033,7 @@ def create_full_run_command(tarball_dependent_resources_map, file_resources_to_m
 	run_command_str_list.append(task_script)
 
 	full_run_command = { 'path' : '/bin/bash'}
-	full_run_command['args'] = [ '-exc' , "".join(run_command_str_list) ]
+	full_run_command['args'] = [ '-ec' , "".join(run_command_str_list) ]
 
 	return full_run_command
 
@@ -1243,20 +1148,6 @@ def handle_git_resource(resource, src_pipeline, task_list):
 
 	# Register the in/out resources
 	add_inout_resources(resource)
-
-	# # Register the docker images list also
-	# output_docker_images_json_resource = copy.copy(resource)
-	# output_docker_images_json_resource['name'] = 'output-%s-%s' % ('git-docker-images', resource['name'], )
-	# output_docker_images_json_resource['regexp'] = '%s/%s/%s-docker-(.*).json' % ( 'resources', 'docker-images', resource['name'])
-	#
-	# final_output_resources.append(output_docker_images_json_resource)
-	#
-	# output_docker_images_resource = copy.copy(resource)
-	# output_docker_images_resource['name'] = 'output-%s-%s' % ('docker-images', resource['name'], )
-	# output_docker_images_resource['regexp'] = '%s/%s/%s-docker-(.*).tar' % ( 'resources', 'docker-images', resource['name'])
-	# final_output_resources.append(output_docker_images_resource)
-
-	#print '###### Job for Git resource: {}'.format(git_job_resource)
 	return git_job_resource
 
 def handle_pivnet_tile_resource(resource):
@@ -1279,25 +1170,12 @@ def handle_pivnet_tile_resource(resource):
 	# Register the default in/out resources
 	add_inout_resources(resource)
 
-
-	# stemcell_regexp = '%s/%s/pivnet-tile/%s-stemcell/bosh-(.*).tgz' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'])
-	# output_stemcell_resource = { 'type': 's3' , 'source': default_bucket_config }
-	# output_stemcell_resource['name'] = 'output-%s-%s' % ('stemcell', resource['name'])
-	# output_stemcell_resource['source']['regexp'] = stemcell_regexp
-	# final_output_resources.append(output_stemcell_resource)
-
 	# Register the combined tile + stemcell also
 	combined_tile_stemcell_regexp = '%s/%s/pivnet-tile/%s-tarball/%s-(.*).tgz' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'], resource['name'])
 	output_tile_stemcell_resource = { 'type': 's3' , 'source': default_bucket_config }
 	output_tile_stemcell_resource['name'] = 'output-%s-%s' % ('tile-stemcell', resource['name'])
 	output_tile_stemcell_resource['source']['regexp'] = combined_tile_stemcell_regexp
 	final_output_resources.append(output_tile_stemcell_resource)
-
-	# offline_stemcell_resource = { 'name' : resource['name'] , 'type': 's3' , 'source': default_bucket_config }
-	# offline_stemcell_resource['source']['regexp'] = stemcell_regexp
-	# offline_stemcell_resource['name'] = '%s-%s' % (resource['name'], 'stemcell')
-	#
-	# offline_pipeline['resources'].append(offline_stemcell_resource)
 
 	tile_tarball_regexp = '%s/%s/pivnet-tile/%s-tarball/(.*).tgz' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'])
 	offline_tile_tarball_resource = { 'name' : '%s-tarball' % resource['name'] , 'type': 's3' , 'source': default_bucket_config }
