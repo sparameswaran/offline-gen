@@ -578,8 +578,8 @@ def handle_resources():
 	# Else handle full parsing
 	if docker_image_analysis_map is None:
 		docker_image_analysis_map = analyze_pipeline_for_docker_images(None, offline_pipeline)
-	else:
-		print 'Used existing docker image analysis map of pipeline from: ' + analysis_output_file
+	#else:
+	#	print 'Used existing docker image analysis map of pipeline from: ' + analysis_output_file
 
 	for docker_image_ref in docker_image_analysis_map['docker_list']:
 		version = 'latest' if docker_image_ref.get('tag') is None else docker_image_ref.get('tag')
@@ -643,129 +643,6 @@ def find_match_in_list(list, name):
 			return entry
 
 	return None
-
-
-
-	# Sample docker_image_analysis_map
-	# {'pcf-pipelines': {'docker_references': [{'repository': 'pcfnorm/rootfs'}],
-	#                    'git_path': 'https://raw.githubusercontent.com/pivotal-cf/pcf-pipelines/master/',
-	#                    'task_defns': [{'create-terraform-state': {'file': 'install-pcf/azure/tasks/create-initial-terraform-state/task.yml',
-	#                                                               'image': {'repository': 'pcfnorm/rootfs'},
-	#                                                               'inputs': [{'name': 'pcf-pipelines'}],
-	#                                                               'script': 'pcf-pipelines/install-pcf/azure/tasks/create-initial-terraform-state/task.sh'}},
-	#                                   {'wipe-env': {'file': 'install-pcf/azure/tasks/wipe-env/task.yml',
-	#                                                 'image': {'repository': 'pcfnorm/rootfs'},
-	#                                                 'inputs': [{'name': 'pcf-pipelines'},
-	#                                                            {'name': 'terraform-state'}],
-	#                                                 'script': 'pcf-pipelines/install-pcf/azure/tasks/wipe-env/task.sh'}},
-	#                                   {'create-infrastructure': {'file': 'install-pcf/azure/tasks/create-infrastructure/task.yml',
-	#                                                              'image': {'repository': 'pcfnorm/rootfs'},
-	#                                                              'inputs': [{'name': 'pcf-pipelines'},
-	#                                                                         {'name': 'opsman-metadata'},
-	#                                                                         {'name': 'terraform-state'}],
-	#                                                              'script': 'pcf-pipelines/install-pcf/azure/tasks/create-infrastructure/task.sh'}},
-	#                                   {'upload-tile': {'file': 'tasks/upload-product-and-stemcell/task.yml',
-	#                                                    'image': {'repository': 'pcfnorm/rootfs'},
-	#                                                    'inputs': [{'name': 'pivnet-product'},
-	#                                                               {'name': 'pcf-pipelines'}],
-	#                                                    'script': 'pcf-pipelines/tasks/upload-product-and-stemcell/task.sh'}},
-	#                                   {'stage-tile': {'file': 'tasks/stage-product/task.yml',
-	#                                                   'image': {'repository': 'pcfnorm/rootfs'},
-	#                                                   'inputs': [{'name': 'pcf-pipelines'},
-	#                                                              {'name': 'pivnet-product'}],
-	#                                                   'script': 'pcf-pipelines/tasks/stage-product/task.sh'}},
-	#                                   {'configure-ert': {'file': 'tasks/config-ert/task.yml',
-	#                                                      'image': {'repository': 'pcfnorm/rootfs'},
-	#                                                      'inputs': [{'name': 'pcf-pipelines'}],
-	#                                                      'script': 'pcf-pipelines/tasks/config-ert/task.sh'}},
-	#                                   {'deploy-ert': {'file': 'tasks/apply-changes/task.yml',
-	#                                                   'image': {'repository': 'pcfnorm/rootfs'},
-	#                                                   'inputs': [{'name': 'pcf-pipelines'}],
-	#                                                   'script': 'pcf-pipelines/tasks/apply-changes/task.sh'}}]},
-	 # 'target-pipeline': {'docker_references': [{'repository': 'czero/cflinuxfs2'}],
-	 #                     'git_path': 'pipeline',
-	 #                     'job_tasks_references': [{'bootstrap-terraform-state': [{'file': 'pcf-pipelines/install-pcf/azure/tasks/create-initial-terraform-state/task.yml',
-	 #                                                                              'git_resource': 'pcf-pipelines',
-	 #                                                                              'task': 'create-terraform-state'}]},
-	 #                                              {'wipe-env': [{'file': 'pcf-pipelines/install-pcf/azure/tasks/wipe-env/task.yml',
-	 #                                                             'git_resource': 'pcf-pipelines',
-	 #                                                             'task': 'wipe-env'}]},
-	 #                                              {'create-infrastructure': [{'file': None,
-	 #                                                                          'git_resource': 'pcf-pipelines',
-	 #                                                                          'task': 'upload-opsman'},
-	 #                                                                         {'file': 'pcf-pipelines/install-pcf/azure/tasks/create-infrastructure/task.yml',
-	 #                                                                          'git_resource': 'pcf-pipelines',
-	 #                                                                          'task': 'create-infrastructure'}]},
-	 #                                              {'config-opsman-auth': [{'file': None,
-	 #                                                                       'git_resource': 'pcf-pipelines',
-	 #                                                                       'task': 'config-opsman'}]},
-	 #                                              {'config-director': [{'file': None,
-	 #                                                                    'git_resource': 'pcf-pipelines',
-	 #                                                                    'task': 'config-director'}]},
-	 #                                              {'deploy-director': [{'file': None,
-	 #                                                                    'git_resource': 'pcf-pipelines',
-	 #                                                                    'task': 'deploy-director'}]},
-	 #                                              {'upload-ert': [{'file': 'pcf-pipelines/tasks/upload-product-and-stemcell/task.yml',
-	 #                                                               'git_resource': 'pcf-pipelines',
-	 #                                                               'task': 'upload-tile'},
-	 #                                                              {'file': 'pcf-pipelines/tasks/stage-product/task.yml',
-	 #                                                               'git_resource': 'pcf-pipelines',
-	 #                                                               'task': 'stage-tile'}]},
-	 #                                              {'configure-ert': [{'file': 'pcf-pipelines/tasks/config-ert/task.yml',
-	 #                                                                  'git_resource': 'pcf-pipelines',
-	 #                                                                  'task': 'configure-ert'}]},
-	 #                                              {'deploy-ert': [{'file': 'pcf-pipelines/tasks/apply-changes/task.yml',
-	 #                                                               'git_resource': 'pcf-pipelines',
-	 #                                                               'task': 'deploy-ert'}]}],
-	 #                     'task_defns': [{'upload-opsman': {'image': {'repository': 'czero/cflinuxfs2'}}},
-	 #                                    {'config-opsman': {'image': {'repository': 'czero/cflinuxfs2'}}},
-	 #                                    {'config-director': {'image': {'repository': 'czero/cflinuxfs2'}}},
-	 #                                    {'deploy-director': {'image': {'repository': 'czero/cflinuxfs2'}}}]}}
-	#
-	# Another sample output
-	#
-	# {'nsx-t-gen-pipeline': {'docker_references': [{'repository': 'nsxedgegen/nsx-t-gen-worker'}],
-	#                         'git_path': 'https://raw.githubusercontent.com/sparameswaran/nsx-t-gen/master/',
-	#                         'task_defns': [{'install-nsx-t': {'file': 'tasks/install-nsx-t/task.yml',
-	#                                                           'image': {'repository': 'nsxedgegen/nsx-t-gen-worker'},
-	#                                                           'inputs': [{'name': 'nsx-t-gen-pipeline'},
-	#                                                                      {'name': 'nsx-mgr-ova'},
-	#                                                                      {'name': 'nsx-ctrl-ova'},
-	#                                                                      {'name': 'nsx-edge-ova'},
-	#                                                                      {'name': 'nsxt-ansible'},
-	#                                                                      {'name': 'ovftool'}],
-	#                                                           'script': 'nsx-t-gen-pipeline/tasks/install-nsx-t/task.sh'}},
-	#                                        {'add-nsx-t-routers': {'file': 'tasks/add-nsx-t-routers/task.yml',
-	#                                                               'image': {'repository': 'nsxedgegen/nsx-t-gen-worker'},
-	#                                                               'inputs': [{'name': 'nsx-t-gen-pipeline'},
-	#                                                                          {'name': 'nsxt-ansible'}],
-	#                                                               'script': 'nsx-t-gen-pipeline/tasks/add-nsx-t-routers/task.sh'}},
-	#                                        {'config-nsx-t-extras': {'file': 'tasks/config-nsx-t-extras/task.yml',
-	#                                                                 'image': {'repository': 'nsxedgegen/nsx-t-gen-worker'},
-	#                                                                 'inputs': [{'name': 'nsx-t-gen-pipeline'}],
-	#                                                                 'script': 'nsx-t-gen-pipeline/tasks/config-nsx-t-extras/task.sh'}}]},
-	 # 'target-pipeline': {'docker_references': [],
-	 #                     'git_path': 'pipeline',
-	 #                     'job_tasks_references': [{'install-nsx-t': [{'file': 'nsx-t-gen-pipeline/tasks/install-nsx-t/task.yml',
-	 #                                                                  'git_resource': 'nsx-t-gen-pipeline',
-	 #                                                                  'task': 'install-nsx-t'}]},
-	 #                                              {'add-nsx-t-routers': [{'file': 'nsx-t-gen-pipeline/tasks/add-nsx-t-routers/task.yml',
-	 #                                                                      'git_resource': 'nsx-t-gen-pipeline',
-	 #                                                                      'task': 'add-nsx-t-routers'}]},
-	 #                                              {'config-nsx-t-extras': [{'file': 'nsx-t-gen-pipeline/tasks/config-nsx-t-extras/task.yml',
-	 #                                                                        'git_resource': 'nsx-t-gen-pipeline',
-	 #                                                                        'task': 'config-nsx-t-extras'}]},
-	 #                                              {'standalone-install-nsx-t': [{'file': 'nsx-t-gen-pipeline/tasks/install-nsx-t/task.yml',
-	 #                                                                             'git_resource': 'nsx-t-gen-pipeline',
-	 #                                                                             'task': 'install-nsx-t'}]},
-	 #                                              {'standalone-add-nsx-t-routers': [{'file': 'nsx-t-gen-pipeline/tasks/add-nsx-t-routers/task.yml',
-	 #                                                                                 'git_resource': 'nsx-t-gen-pipeline',
-	 #                                                                                 'task': 'add-nsx-t-routers'}]},
-	 #                                              {'standalone-config-nsx-t-extras': [{'file': 'nsx-t-gen-pipeline/tasks/config-nsx-t-extras/task.yml',
-	 #                                                                                   'git_resource': 'nsx-t-gen-pipeline',
-	 #                                                                                   'task': 'config-nsx-t-extras'}]}],
-	 #                     'task_defns': []}}
-	 #
 
 def create_resource_map(resource_list):
 	resource_map = {}
@@ -996,18 +873,40 @@ def handle_get_resource_details(get_resource_name, job_tasks_reference):
 
 	return new_nested_plan_entries
 
+
+# Pipeline tasks might not specify all expected keys for a given tasks
+# So, add those back into the inlined params for a task so the actual task execution does not barf
+def merge_param_names(given_task_params, original_task_input_params):
+	for expected_key in original_task_input_params.keys():
+		if expected_key not in given_task_params.keys():
+			given_task_params[expected_key] = None
+
 def inline_task_details(plan, alias_resource_map, ref_map_target_job_name, saved_plan_inputs):
 
 	given_task_name = plan.get('task')
 	given_task_file = plan.get('file')
 	given_task_params = plan.get('params')
 
+	original_task_inputs = []
+	for entry in saved_plan_inputs:
+		original_task_inputs.append( { 'name' : entry } )
+
 	# If the plan task has already been inlined, return
 	if given_task_file is None and 'offlined-' in given_task_name:
 		return
 
 	if given_task_file is None:
-		handle_preinlined_task_details(plan, saved_plan_inputs)
+		#handle_preinlined_task_details(plan, saved_plan_inputs)
+		original_task_script = plan['config']['run']['args'][1]
+		original_task_outputs = plan.get('outputs')
+		docker_image_tarball_input_name = None
+
+		inline_remaining_plan_config(plan,
+									alias_resource_map,
+									docker_image_tarball_input_name,
+									original_task_inputs,
+									original_task_outputs,
+									original_task_script)
 		return
 
 	index = given_task_file.index('/')
@@ -1016,13 +915,9 @@ def inline_task_details(plan, alias_resource_map, ref_map_target_job_name, saved
 	# If the task is a match, then proceed with updating the task reference to use tarballed docker image
 	# and special handling
 
-	docker_image_tarball_name = None
-
 	original_task_outputs = None
 	original_task_script = None
-	original_task_inputs = []
-	for entry in saved_plan_inputs:
-		original_task_inputs.append( { 'name' : entry } )
+	docker_image_tarball_name = None
 
 	offline_resource_map = create_resource_map(offline_pipeline['resources'])
 
@@ -1074,145 +969,98 @@ def inline_task_details(plan, alias_resource_map, ref_map_target_job_name, saved
 
 	plan['config'] = { 'platform' : 'linux', 'image_resource': docker_image_source }
 
-	# Start with the docker image tarball
-	new_task_inputs = [ { 'name': docker_image_tarball_name } ]
-	new_task_outputs = original_task_outputs if original_task_outputs is not None else []
-
-	tarball_resources_to_extract_map = {}
-	file_resources_to_move_map = {}
+	# Pass the docker image tarball as input
+	inline_remaining_plan_config(plan,
+								alias_resource_map,
+								docker_image_tarball_name,
+								original_task_inputs,
+								original_task_outputs,
+								original_task_script)
 
 	#print '\n## Task: {} Original Task Inputs: {} and original_task_script: {}\n'.format(given_task_name,
-	# 														original_task_inputs, original_task_script)
-
-	matching_tarballed_resource = None
-	for original_input in original_task_inputs:
-
-		matching_tarballed_git_resource = None
-		#print 'Original Input is : {}'.format(original_input)
-		matching_tarballed_git_resource = offline_resource_map.get(original_input['name'] + '-tarball')
-
-		if matching_tarballed_git_resource is not None:
-			# Add the github tarball as input if its a match against git resources in offline pipeline
-			new_task_inputs.append(  { 'name' : matching_tarballed_git_resource['name'] } )
-			new_task_outputs.append( { 'name' : original_input['name'] } )
-
-			# Use same input name in the map as coming with its registered name
-			tarball_resources_to_extract_map[original_input['name'] ] = original_input['name']
-
-		# Check against offline resources as normal resource
-		if matching_tarballed_git_resource is None:
-			matching_resource = offline_resource_map.get(original_input['name'])
-			if matching_resource is not None:
-				# add the input as is
-				new_task_inputs.append( { 'name': original_input['name'] } )
+	# 														given_task_inputs, given_task_script)
 
 
-		# Check for aliased resource for matching tarballed resource
-		if matching_tarballed_git_resource is None and matching_resource is None:
-			aliased_resource_name = original_input['name']
-			original_underlying_resource = alias_resource_map[aliased_resource_name]
-			if original_underlying_resource is not None:
-				matching_tarballed_resource = offline_resource_map.get(original_underlying_resource + '-tarball')
-
-				if matching_tarballed_resource is not None:
-					new_task_inputs.append(  { 'name' : matching_tarballed_resource['name'] } )
-					new_task_outputs.append( { 'name' : aliased_resource_name } )
-					# Map the aliased name against registered resource name
-					tarball_resources_to_extract_map[aliased_resource_name ] = original_underlying_resource
-
-				else:
-					new_task_inputs.append( { 'name': original_underlying_resource } )
-					new_task_outputs.append( { 'name' : aliased_resource_name } )
-					file_resources_to_move_map[aliased_resource_name] = original_underlying_resource
-			else:
-				# Give up as we are unable to locate any matching direct or tarballed or aliased resource
-				print '\n## Unable to find associated Resource for : {}'.format(original_input['name'])
-
-	plan.pop('file', None)
-	plan['task'] = 'offlined-' + plan['task']
-	plan['config']['inputs'] = normalize_list(new_task_inputs)
-	plan['config']['run'] = create_full_run_command(tarball_resources_to_extract_map,
-													file_resources_to_move_map,
-													matching_tarballed_resource,
-													original_task_script)
-
-	if new_task_outputs is not None and new_task_outputs:
-		plan['config']['outputs'] = normalize_list(new_task_outputs)
-
-	#print 'Final inlined task plan: {}'.format(plan)
-
-# Pipeline tasks might not specify all expected keys for a given tasks
-# So, add those back into the inlined params for a task so the actual task execution does not barf
-def merge_param_names(given_task_params, original_task_input_params):
-	for expected_key in original_task_input_params.keys():
-		if expected_key not in given_task_params.keys():
-			given_task_params[expected_key] = None
-
-def handle_preinlined_task_details(plan, saved_plan_inputs):
-
-	given_task_name = plan.get('task')
-	given_task_params = plan.get('params')
-
-	# print 'Pre-inlined Task details top Job name:{}, for task:{} and given plan level inputs:{} \n\n'.format(
-	# 				plan, given_task_name, saved_plan_inputs)
+def inline_remaining_plan_config(plan,
+								alias_resource_map,
+								docker_image_tarball_input_name,
+								original_task_inputs,
+								original_task_outputs,
+								original_task_script):
 
 	# If the plan task has already been inlined, return
-	if 'offlined-' in given_task_name:
+	if 'offlined-' in plan.get('task'):
 		return
 
-	original_task_inputs = []
-	for entry in saved_plan_inputs:
-		original_task_inputs.append( { 'name' : entry } )
+	# print '\nInline_remaining_plan_config Task details top plan:{} and plan level inputs:{} abd docker_image_tarball_input_name:{} \n\n'.format(
+	#  				plan, original_task_inputs, docker_image_tarball_input_name)
 
-	original_task_outputs = plan.get('outputs')
-	original_task_run = plan['config']['run']
-	original_task_script = plan['config']['run']['args'][1]
+	new_task_input_names = [ ]
+	offline_resource_map = create_resource_map(offline_pipeline['resources'])
 
-	new_task_inputs = []
+	docker_image_source = None
+	matching_tarballed_docker_resource = None
+	if docker_image_tarball_input_name is not None:
+		new_task_input_names = [ docker_image_tarball_input_name ]
+		matching_tarballed_docker_resource = offline_resource_map.get(docker_image_tarball_input_name)
+		source_bucket_details = copy.copy(default_bucket_config)
+		source_bucket_details['regexp'] = matching_tarballed_docker_resource['source']['regexp']
+		docker_image_source = {
+							'type': 's3',
+							'source' : source_bucket_details,
+							'params' : { 'unpack': True }
+						}
+
 	new_task_outputs = original_task_outputs if original_task_outputs is not None else []
 
 	tarball_resources_to_extract_map = {}
 	file_resources_to_move_map = {}
-	offline_resource_map = create_resource_map(offline_pipeline['resources'])
 
-	matching_tarballed_resource = None
+	final_matching_resource = None
+	#print 'Starting off with orignal_task_inputs:{} and offline resoruce map: {}'.format(original_task_inputs, offline_resource_map)
 	for original_input in original_task_inputs:
 
-		matching_tarballed_git_resource = None
-		# Check for tarballed resource from offline resources
-		matching_tarballed_git_resource = offline_resource_map.get( original_input['name'] + '-tarball')
+		matching_resource = None
+		matching_tarballed_resource = None
 
-		if matching_tarballed_git_resource is not None:
+		# Check for tarballed resource from offline resources
+		matching_tarballed_resource = offline_resource_map.get( original_input['name'] + '-tarball')
+
+		if matching_tarballed_resource is not None:
 			# Add the github tarball as input if its a match against git resources in offline pipeline
-			new_task_inputs.append( { 'name' : matching_tarballed_git_resource['name'] } )
+			new_task_input_names.append( matching_tarballed_resource['name'] )
 			new_task_outputs.append( { 'name' : original_input['name'] } )
 
 			# Use same input name in the map as coming with its registered name
 			tarball_resources_to_extract_map[original_input['name'] ] = original_input['name']
+			final_matching_resource = matching_tarballed_resource
 
 		# Check for normal resource from offline resources
 		if matching_tarballed_resource is None:
 			matching_resource = offline_resource_map.get(original_input['name'])
 			if matching_resource is not None:
 				# add the input as is
-				new_task_inputs.append( { 'name': original_input['name'] } )
+				new_task_input_names.append( original_input['name'] )
+				final_matching_resource = matching_resource
 
 		# Check for aliased resource for matching tarballed resource
-		if matching_tarballed_git_resource is None and matching_resource is None:
+		if matching_tarballed_resource is None and matching_resource is None:
 			aliased_resource_name = original_input['name']
 			original_underlying_resource = alias_resource_map[aliased_resource_name]
 			if original_underlying_resource is not None:
 
 				matching_tarballed_resource = offline_resource_map.get(original_underlying_resource + '-tarball')
 				if matching_tarballed_resource is not None:
-					new_task_inputs.append( { 'name' : matching_tarballed_resource['name'] } )
+					new_task_input_names.append( matching_tarballed_resource['name'] )
 					new_task_outputs.append( { 'name' : aliased_resource_name } )
 					# Map the aliased name against registered resource name
 					tarball_resources_to_extract_map[aliased_resource_name ] = original_underlying_resource
+					final_matching_resource = matching_tarballed_resource
 				else:
-					new_task_inputs.append( { 'name': original_underlying_resource } )
+					new_task_input_names.append( original_underlying_resource )
 					new_task_outputs.append( { 'name' : aliased_resource_name } )
 					file_resources_to_move_map[aliased_resource_name] = original_underlying_resource
+					final_matching_resource = original_underlying_resource
 
 			else:
 				# Give up as we are unable to locate any matching direct or tarballed or aliased resource
@@ -1220,13 +1068,29 @@ def handle_preinlined_task_details(plan, saved_plan_inputs):
 
 	plan.pop('file', None)
 	plan['task'] = 'offlined-' + plan['task']
-	plan['config'].pop('image', None)
-	plan['config']['inputs'] = normalize_list(new_task_inputs)
-	plan['config']['image_resource'] = {
-										'params': { 'unpack' : True} ,
+
+	if docker_image_source is not None:
+		plan['config'] = {
+							'platform' : 'linux',
+							'image_resource': docker_image_source
+						}
+	else:
+		plan['config'] = {
+							'platform' : 'linux',
+							'image_resource': {
+										'params': { 'unpack' : True } ,
 										'type': 's3',
-										'source' : matching_tarballed_resource['source']
+										'source' : final_matching_resource['source']
 									}
+						}
+
+	# The docker image is not required to be part of the task input list
+	new_task_input_names = normalize_list(new_task_input_names)
+	for resource_name in copy.copy(new_task_input_names):
+		if 'docker' in resource_name:
+			new_task_input_names.remove(resource_name)
+
+	plan['config']['inputs'] = normalize_into_named_list(new_task_input_names)
 	plan['config']['run'] = create_full_run_command(tarball_resources_to_extract_map,
 													file_resources_to_move_map,
 													matching_tarballed_resource,
@@ -1235,7 +1099,6 @@ def handle_preinlined_task_details(plan, saved_plan_inputs):
 	if new_task_outputs is not None and new_task_outputs:
 		plan['config']['outputs'] = normalize_list(new_task_outputs)
 
-	#print 'Final inlined task plan: {}'.format(plan)
 
 def create_full_run_command(tarball_dependent_resources_map, file_resources_to_move_map, ignore_resource, task_script):
 
@@ -1270,10 +1133,25 @@ def create_full_run_command(tarball_dependent_resources_map, file_resources_to_m
 	return full_run_command
 
 def normalize_list(given_list):
-	cleanedup_list = []
+
+	final_list = []
 	for entry in given_list:
-		if entry not in cleanedup_list:
-			cleanedup_list.append(entry)
+		if entry not in final_list:
+			final_list.append(entry)
+
+	return final_list
+
+def normalize_into_named_list(given_list):
+
+	resource_names = list(set(given_list))
+	for name in copy.copy(resource_names):
+		if name + '-tarball' in resource_names:
+			resource_names.remove(name)
+
+	cleanedup_list = []
+	for name in resource_names:
+		cleanedup_list.append( { 'name' : name })
+
 	return cleanedup_list
 
 def add_inout_resources(resource):
@@ -1520,8 +1398,10 @@ def read_config(input_file, abort=True):
 			yamlcontent = yaml.safe_load(config_file)
 			return yamlcontent
 	except IOError as e:
-		print >> sys.stderr, 'Problem with file, abort!'
+		print('Error : {}'.format(e))
+		print >> sys.stderr, 'Problem with file!'
 		if abort:
+			print >> sys.stderr, 'Aborting!!'
 			sys.exit(1)
 	except Exception as ce:
 		print ce
