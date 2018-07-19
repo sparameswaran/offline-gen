@@ -3,29 +3,35 @@
 Offline Generator of Concourse pipelines
 
 # Motivation
-There are situations where online access is not permitted or allowed. This implies Concourse pipelines would be unable to download github resources, docker images, Pivotal Tiles and other artifacts from online sources in such airgapped environments.
+There are situations where online access is not permitted or allowed. This implies Concourse pipelines would be unable to download Github resources, docker images, Pivotal Tiles and other artifacts from online sources in such airgapped environments. Added complexity is that concourse pipeline are built around using docker images for running its tasks and hence each of the pipeline tasks would have to be modified to use a cached docker tarball (as well as saving those docker images locally). This requires manual creation of offline specific tasks and pipelines.
 
-The motivation of this tool is to alleviate the problem of tracking down and saving the online resources into blobstores, creating and maintaining manually a different set of pipelines that refer to these offlined resources. Rather use a tool to automatically harvest the resources referred in a pipeline into a S3 compatible blobstore, generate the offline pipeline that refers to these saved artifacts and allow execution in isolated/offline mode.
+The motivation of this tool is to alleviate the problem of tracking down and saving the online resources into Blobstores, creating and maintaining manually a different set of pipelines that refer to these offlined resources. Rather use a tool to automatically harvest the resources referred in a pipeline into a S3 compatible Blobstore, generate the offline pipeline that refers to these saved artifacts and allow execution in isolated/offline mode.
 
 # Overview
-Creates two separate pipelines that handle:
-* Upload of all the contents referred by a concourse pipeline to S3 Blobstore
+Generate two separate pipelines that handle:
+* Blob Upload pipeline: upload of all the contents referred by a concourse pipeline to S3 Blobstore
   * Github repositories
   * Docker images (as tarballs)
   * Files or nested folders (as tarballs for multiple files)
   * Pivnet Tiles (with stemcells)
   * Non-Pivnet Tiles (like Ops Mgr Ova file)
-* Offline Pipeline that uses only offlined version of resources saved in S3 Blobstore
+* Offline Pipeline: uses only offlined version of resources saved in S3 Blobstore
 
-Offline-gen Design
+##Offline-gen Design
 <div><img src="images/offline-gen-arch.png" width="500"/></div>
 
 The tool requires a s3 compatible blobstore like minio to be running and accessible from the concourse pipelines.
 
-The generated offline and blobstore pipelines would refer to hard coded s3 blobstore details used by the offline-gen tool to store and save artifacts.
+The generated offline and blobstore pipelines would refer to parameterized s3 blobstore to store and save artifacts.
 
-Once the blobs have been saved into a blobstore, these can be exported and imported into a different s3 blobstore. The generated pipelines would be saved under <run-id>/resources/offline-gen/<offline|blobstore-upload>-<pipeline-name>.yml
+The Offline-gen and Blob Upstore pipeline are both expected to run in an online environment so they can grab down resources they are dependent on (for offline-gen) or save them into the S3 blobstore (as for blob-upload pipeline). The offline-gen does not require specifying the version of tiles or products etc. The blob upload pipeline does require them to save the correct version into the blobstore.
+
+Once the blobs have been saved into a blobstore, these can be exported and imported into a different S3 blobstore. The generated pipeline templates would be saved  along with the blobs under <run-id>/resources/offline-gen/<offline|blobstore-upload>-<pipeline-name>.yml
 <div><img src="images/offlinegen-output.png" width="450"/></div>
+
+The airgapped environment is expected to have minimally a Concourse Execution environment along with the exported Blobstore artifacts expected by the offline pipeline.
+
+The offline pipeline can then be run by pointing to the cached S3 blobstore artifacts to execute the target pipeline in the airgapped environment without reaching outside.
 
 # Running as a Concourse pipeline
 
@@ -80,25 +86,51 @@ export SERVER_ENDPOINT=<SERVER_IP>:9000
 # Start the minio server
 nohup ./minio server --address $SERVER_ENDPOINT ./minio-data &
 ```
+Or if planning to use docker images of minio, use:
+```
+mkdir minio-data config
+docker run -d -p 9000:9000 -e MINIO_ACCESS_KEY=my_access_id -e MINIO_SECRET_KEY=my_secret_access_key -v $PWD/minio-data:/data -v $PWD/config:/root/.minio minio/minio server /data
+```
+
+Check the output to match the keys specified.
+Sample output for docker image:
+```
+Created minio configuration file successfully at /root/.minio
+
+Endpoint:  http://172.17.0.2:9000  http://127.0.0.1:9000
+AccessKey: my_access_id
+SecretKey: my_secret_access_key
+
+Browser Access:
+   http://172.17.0.2:9000  http://127.0.0.1:9000
+
+Command-line Access: https://docs.minio.io/docs/minio-client-quickstart-guide
+   $ mc config host add myminio http://172.17.0.2:9000 my_access_id my_secret_access_key
+
+```
 
 Download minio client [mc](https://minio.io/downloads.html#download-client) and use that to create a minio bucket
 ```
 # Register with a local minio server as local
-mc config host add local http://localhost:9000 my-access-id my-secret-access-key
+mc config host add local http://localhost:9000 my_access_id my_secret_access_key
 
 # Create a bucket on local minio server
 mc mb local/offline-bucket
 # List the bucket
-mc ls remote/offline-bucket
+mc ls local/offline-bucket
 
-# Register with a remote minio server as remote
-mc config host add remote http://$SERVER_IP:9000 my-access-id my-secret-access-key
+# Registering from a remote client
+mc config host add remote http://$SERVER_IP:9000 my_access_id my_secret_access_key
 
 # Create new offline-bucket2
 mc mb remote/offline-bucket2
 ```
 Make sure the bucket name does not contain `_` character.
 Edit the input param settings to use the minio access keys.
+
+Also, if no env variables are provided, then minio would use randomly generated values for the keys. The input parameter file should contain the correct keys for offline-gen to work.
+
+Note: minio does not support auto file versioning unlike AWS S3. So, the offline-gen tool uses regexp to specify matching files.
 
 # Stages
 
