@@ -319,15 +319,15 @@ def analyze_pipeline_for_docker_images(pipeline_repo_path, target_pipeline):
 
 	identify_associated_docker_image_for_task(git_task_list)
 
-	print '\nFinal Docker dependency list'
-	pprint(full_docker_ref)
-	print '\nDependency graph of Github Repos, tasks and docker images references\n'
-	pprint(docker_image_for_git_task_list)
+	# print '\nFinal Docker dependency list'
+	# pprint(full_docker_ref)
+	# print '\nDependency graph of Github Repos, tasks and docker images references\n'
+	# pprint(docker_image_for_git_task_list)
 
 	docker_image_analysis_map = { 'docker_list': full_docker_ref, 'pipeline_task_docker_references':  docker_image_for_git_task_list }
 	write_config( docker_image_analysis_map, analysis_output_file)
-	print ''
-	print 'Created docker image analysis of pipeline: ' + analysis_output_file
+	# print ''
+	# print 'Created docker image analysis of pipeline: ' + analysis_output_file
 
 	return docker_image_analysis_map
 
@@ -454,7 +454,7 @@ def load_github_resource(git_repo_id, git_remote_uri, task_file_path):
 
 		with open(input_file) as task_file:
 			yamlcontent = yaml.safe_load(task_file)
-			print 'Successful reading task as local file: {}\n'.format(input_file)
+			#print 'Successful reading task as local file: {}\n'.format(input_file)
 			return yamlcontent
 	except IOError as e:
 		try:
@@ -1276,9 +1276,9 @@ def read_config(input_file, abort=True):
 			yamlcontent = yaml.safe_load(config_file)
 			return yamlcontent
 	except IOError as e:
-		print('Error : {}'.format(e))
-		print >> sys.stderr, 'Problem with file!'
 		if abort:
+			print('Error : {}'.format(e))
+			print >> sys.stderr, 'Problem with file!'
 			print >> sys.stderr, 'Aborting!!'
 			sys.exit(1)
 	except Exception as ce:

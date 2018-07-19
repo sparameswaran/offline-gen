@@ -18,7 +18,7 @@ jobs:
       platform: linux
       run:
         args:
-        - -exc
+        - -ec
         - |
             echo ${OFFLINE_GEN_YAML_PARAM} > offline-gen-output/offline-gen-params.yml
             echo ${PIPELINE_YAML_PARAM} > offline-gen-output/pipeline-params.yml

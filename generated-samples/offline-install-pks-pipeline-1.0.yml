@@ -29,7 +29,6 @@ jobs:
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
-      - {name: pcfnorm-rootfs-latest-docker-tarball}
       - {name: pcf-pipelines-tarball}
       - {name: pcf-ops-manager}
       outputs:
@@ -37,7 +36,7 @@ jobs:
       - {name: pcf-pipelines}
       platform: linux
       run:
-        args: [-exc, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
+        args: [-ec, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd pcf-pipelines;
             tar -zxf ../pcf-pipelines-tarball/*.tgz; cd ..;cd pivnet-opsman-product;
@@ -75,16 +74,14 @@ jobs:
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
-      - {name: pcfnorm-rootfs-latest-docker-tarball}
       - {name: pcf-pipelines-tarball}
       - {name: nsx-t-ci-pipeline-tarball}
-      - {name: czero-cflinuxfs2-latest-docker-tarball}
       - {name: pcf-ops-manager}
       outputs:
       - {name: pcf-pipelines}
       platform: linux
       run:
-        args: [-exc, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
+        args: [-ec, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd pcf-pipelines;
             tar -zxf ../pcf-pipelines-tarball/*.tgz; cd ..;for token in $(env | grep
@@ -103,16 +100,14 @@ jobs:
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
-      - {name: czero-cflinuxfs2-latest-docker-tarball}
       - {name: pcf-pipelines-tarball}
-      - {name: pcfnorm-rootfs-latest-docker-tarball}
       - {name: nsx-t-ci-pipeline-tarball}
       - {name: pcf-ops-manager}
       outputs:
       - {name: nsx-t-ci-pipeline}
       platform: linux
       run:
-        args: [-exc, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
+        args: [-ec, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsx-t-ci-pipeline;
             tar -zxf ../nsx-t-ci-pipeline-tarball/*.tgz; cd ..;for token in $(env
@@ -165,14 +160,13 @@ jobs:
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
-      - {name: czero-cflinuxfs2-latest-docker-tarball}
-      - {name: nsx-t-ci-pipeline-tarball}
       - {name: pcf-ops-manager}
+      - {name: nsx-t-ci-pipeline-tarball}
       outputs:
       - {name: nsx-t-ci-pipeline}
       platform: linux
       run:
-        args: [-exc, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
+        args: [-ec, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsx-t-ci-pipeline;
             tar -zxf ../nsx-t-ci-pipeline-tarball/*.tgz; cd ..;for token in $(env
@@ -204,17 +198,16 @@ jobs:
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
-      - {name: czero-cflinuxfs2-latest-docker-tarball}
-      - {name: nsx-t-ci-pipeline-tarball}
-      - {name: pivotal-container-service-tarball}
       - {name: pcf-ops-manager}
+      - {name: pivotal-container-service-tarball}
+      - {name: nsx-t-ci-pipeline-tarball}
       outputs:
       - {name: pivotal-container-service}
       - {name: pivnet-product}
       - {name: nsx-t-ci-pipeline}
       platform: linux
       run:
-        args: [-exc, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
+        args: [-ec, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsx-t-ci-pipeline;
             tar -zxf ../nsx-t-ci-pipeline-tarball/*.tgz; cd ..;cd pivotal-container-service;
@@ -245,14 +238,13 @@ jobs:
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
-      - {name: czero-cflinuxfs2-latest-docker-tarball}
-      - {name: nsx-t-ci-pipeline-tarball}
       - {name: pcf-ops-manager}
+      - {name: nsx-t-ci-pipeline-tarball}
       outputs:
       - {name: nsx-t-ci-pipeline}
       platform: linux
       run:
-        args: [-exc, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
+        args: [-ec, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsx-t-ci-pipeline;
             tar -zxf ../nsx-t-ci-pipeline-tarball/*.tgz; cd ..;for token in $(env
@@ -304,14 +296,13 @@ jobs:
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
-      - {name: czero-cflinuxfs2-latest-docker-tarball}
-      - {name: nsx-t-ci-pipeline-tarball}
       - {name: pcf-ops-manager}
+      - {name: nsx-t-ci-pipeline-tarball}
       outputs:
       - {name: nsx-t-ci-pipeline}
       platform: linux
       run:
-        args: [-exc, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
+        args: [-ec, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsx-t-ci-pipeline;
             tar -zxf ../nsx-t-ci-pipeline-tarball/*.tgz; cd ..;for token in $(env
@@ -338,13 +329,12 @@ jobs:
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
-      - {name: czero-rootfs-latest-docker-tarball}
       - {name: nsx-t-ci-pipeline-tarball}
       outputs:
       - {name: nsx-t-ci-pipeline}
       platform: linux
       run:
-        args: [-exc, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
+        args: [-ec, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsx-t-ci-pipeline;
             tar -zxf ../nsx-t-ci-pipeline-tarball/*.tgz; cd ..;for token in $(env
@@ -365,13 +355,12 @@ jobs:
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
-      - {name: czero-rootfs-latest-docker-tarball}
       - {name: nsx-t-ci-pipeline-tarball}
       outputs:
       - {name: nsx-t-ci-pipeline}
       platform: linux
       run:
-        args: [-exc, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
+        args: [-ec, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsx-t-ci-pipeline;
             tar -zxf ../nsx-t-ci-pipeline-tarball/*.tgz; cd ..;for token in $(env
@@ -401,16 +390,15 @@ jobs:
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
-      - {name: czero-cflinuxfs2-latest-docker-tarball}
-      - {name: nsx-t-ci-pipeline-tarball}
       - {name: pivotal-container-service-tarball}
+      - {name: nsx-t-ci-pipeline-tarball}
       outputs:
       - {name: pivotal-container-service}
       - {name: pivnet-product}
       - {name: nsx-t-ci-pipeline}
       platform: linux
       run:
-        args: [-exc, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
+        args: [-ec, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsx-t-ci-pipeline;
             tar -zxf ../nsx-t-ci-pipeline-tarball/*.tgz; cd ..;cd pivotal-container-service;
@@ -440,13 +428,12 @@ jobs:
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
-      - {name: czero-cflinuxfs2-latest-docker-tarball}
       - {name: nsx-t-ci-pipeline-tarball}
       outputs:
       - {name: nsx-t-ci-pipeline}
       platform: linux
       run:
-        args: [-exc, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
+        args: [-ec, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsx-t-ci-pipeline;
             tar -zxf ../nsx-t-ci-pipeline-tarball/*.tgz; cd ..;for token in $(env
@@ -463,13 +450,12 @@ jobs:
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
-      - {name: czero-cflinuxfs2-latest-docker-tarball}
       - {name: nsx-t-ci-pipeline-tarball}
       outputs:
       - {name: nsx-t-ci-pipeline}
       platform: linux
       run:
-        args: [-exc, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
+        args: [-ec, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsx-t-ci-pipeline;
             tar -zxf ../nsx-t-ci-pipeline-tarball/*.tgz; cd ..;for token in $(env
@@ -496,13 +482,12 @@ jobs:
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
-      - {name: czero-rootfs-latest-docker-tarball}
       - {name: nsx-t-ci-pipeline-tarball}
       outputs:
       - {name: nsx-t-ci-pipeline}
       platform: linux
       run:
-        args: [-exc, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
+        args: [-ec, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsx-t-ci-pipeline;
             tar -zxf ../nsx-t-ci-pipeline-tarball/*.tgz; cd ..;for token in $(env
@@ -519,13 +504,12 @@ jobs:
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
-      - {name: czero-rootfs-latest-docker-tarball}
       - {name: nsx-t-ci-pipeline-tarball}
       outputs:
       - {name: nsx-t-ci-pipeline}
       platform: linux
       run:
-        args: [-exc, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
+        args: [-ec, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsx-t-ci-pipeline;
             tar -zxf ../nsx-t-ci-pipeline-tarball/*.tgz; cd ..;for token in $(env
@@ -547,13 +531,12 @@ jobs:
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
-      - {name: czero-rootfs-latest-docker-tarball}
       - {name: nsx-t-ci-pipeline-tarball}
       outputs:
       - {name: nsx-t-ci-pipeline}
       platform: linux
       run:
-        args: [-exc, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
+        args: [-ec, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsx-t-ci-pipeline;
             tar -zxf ../nsx-t-ci-pipeline-tarball/*.tgz; cd ..;for token in $(env
@@ -570,13 +553,12 @@ jobs:
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
-      - {name: czero-rootfs-latest-docker-tarball}
       - {name: nsx-t-ci-pipeline-tarball}
       outputs:
       - {name: nsx-t-ci-pipeline}
       platform: linux
       run:
-        args: [-exc, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
+        args: [-ec, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsx-t-ci-pipeline;
             tar -zxf ../nsx-t-ci-pipeline-tarball/*.tgz; cd ..;for token in $(env
@@ -598,13 +580,12 @@ jobs:
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
-      - {name: pivotalservices-pks-kubectl-latest-docker-tarball}
       - {name: pcf-pipelines-utils-tarball}
       outputs:
       - {name: pcf-pipelines-utils}
       platform: linux
       run:
-        args: [-exc, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
+        args: [-ec, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd pcf-pipelines-utils;
             tar -zxf ../pcf-pipelines-utils-tarball/*.tgz; cd ..;for token in $(env
@@ -627,13 +608,12 @@ jobs:
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
-      - {name: czero-rootfs-latest-docker-tarball}
       - {name: nsx-t-ci-pipeline-tarball}
       outputs:
       - {name: nsx-t-ci-pipeline}
       platform: linux
       run:
-        args: [-exc, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
+        args: [-ec, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsx-t-ci-pipeline;
             tar -zxf ../nsx-t-ci-pipeline-tarball/*.tgz; cd ..;for token in $(env

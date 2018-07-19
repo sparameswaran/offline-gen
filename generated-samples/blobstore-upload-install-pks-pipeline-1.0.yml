@@ -39,7 +39,7 @@ jobs:
         - {name: output-git-pcf-pipelines}
         platform: linux
         run:
-          args: [-exc, 'cd input-git-pcf-pipelines
+          args: [-ec, 'cd input-git-pcf-pipelines
 
               tar cfz ../output-git-pcf-pipelines/pcf-pipelines-tarball.tgz .
 
@@ -60,7 +60,7 @@ jobs:
         - {name: output-git-nsx-t-ci-pipeline}
         platform: linux
         run:
-          args: [-exc, 'cd input-git-nsx-t-ci-pipeline
+          args: [-ec, 'cd input-git-nsx-t-ci-pipeline
 
               tar cfz ../output-git-nsx-t-ci-pipeline/nsx-t-ci-pipeline-tarball.tgz
               .
@@ -83,7 +83,7 @@ jobs:
         params: {IAAS: ((iaas)), PIVNET_API_TOKEN: ((pivnet_token))}
         platform: linux
         run:
-          args: [-exc, 'echo \"Copying pcf-ops-manager bits\"
+          args: [-ec, 'echo \"Copying pcf-ops-manager bits\"
 
               rm input-pivnet-non-tile-pcf-ops-manager/version input-pivnet-non-tile-pcf-ops-manager/metadata*
 
@@ -108,7 +108,7 @@ jobs:
         params: {IAAS: ((iaas)), PIVNET_API_TOKEN: ((pivnet_token))}
         platform: linux
         run:
-          args: [-exc, "echo \"Copying pivotal-container-service tile bits\"\nTILE_DIRECTORY_PATH=./input-tile-pivotal-container-service\n\
+          args: [-ec, "echo \"Copying pivotal-container-service tile bits\"\nTILE_DIRECTORY_PATH=./input-tile-pivotal-container-service\n\
               TILE_FILE_PATH=`find $TILE_DIRECTORY_PATH -name *.pivotal | sort | head\
               \ -1`\ntile_metadata=$(unzip -l $TILE_FILE_PATH | grep \"metadata\"\
               \ | grep \"ml$\" | awk '{print $NF}' );\nstemcell_version_reqd=$(unzip\
@@ -142,7 +142,7 @@ jobs:
         - {name: output-git-pcf-pipelines-utils}
         platform: linux
         run:
-          args: [-exc, 'cd input-git-pcf-pipelines-utils
+          args: [-ec, 'cd input-git-pcf-pipelines-utils
 
               tar cfz ../output-git-pcf-pipelines-utils/pcf-pipelines-utils-tarball.tgz
               .
@@ -164,7 +164,7 @@ jobs:
         - {name: output-docker-pcfnorm-rootfs-latest-docker}
         platform: linux
         run:
-          args: [-exc, 'echo "Exporting pcfnorm-rootfs-latest-docker docker image";
+          args: [-ec, 'echo "Exporting pcfnorm-rootfs-latest-docker docker image";
 
               mkdir export-directory;
 
@@ -202,7 +202,7 @@ jobs:
         - {name: output-docker-czero-cflinuxfs2-latest-docker}
         platform: linux
         run:
-          args: [-exc, 'echo "Exporting czero-cflinuxfs2-latest-docker docker image";
+          args: [-ec, 'echo "Exporting czero-cflinuxfs2-latest-docker docker image";
 
               mkdir export-directory;
 
@@ -240,7 +240,7 @@ jobs:
         - {name: output-docker-czero-rootfs-latest-docker}
         platform: linux
         run:
-          args: [-exc, 'echo "Exporting czero-rootfs-latest-docker docker image";
+          args: [-ec, 'echo "Exporting czero-rootfs-latest-docker docker image";
 
               mkdir export-directory;
 
@@ -278,8 +278,8 @@ jobs:
         - {name: output-docker-pivotalservices-pks-kubectl-latest-docker}
         platform: linux
         run:
-          args: [-exc, 'echo "Exporting pivotalservices-pks-kubectl-latest-docker
-              docker image";
+          args: [-ec, 'echo "Exporting pivotalservices-pks-kubectl-latest-docker docker
+              image";
 
               mkdir export-directory;
 
@@ -344,7 +344,7 @@ jobs:
       - {name: output-git-pcf-pipelines}
       platform: linux
       run:
-        args: [-exc, 'cd input-git-pcf-pipelines
+        args: [-ec, 'cd input-git-pcf-pipelines
 
             tar cfz ../output-git-pcf-pipelines/pcf-pipelines-tarball.tgz .
 
@@ -371,7 +371,7 @@ jobs:
       - {name: output-git-nsx-t-ci-pipeline}
       platform: linux
       run:
-        args: [-exc, 'cd input-git-nsx-t-ci-pipeline
+        args: [-ec, 'cd input-git-nsx-t-ci-pipeline
 
             tar cfz ../output-git-nsx-t-ci-pipeline/nsx-t-ci-pipeline-tarball.tgz
             .
@@ -401,7 +401,7 @@ jobs:
       params: {IAAS: ((iaas)), PIVNET_API_TOKEN: ((pivnet_token))}
       platform: linux
       run:
-        args: [-exc, 'echo \"Copying pcf-ops-manager-pivnet-non-tile bits\"
+        args: [-ec, 'echo \"Copying pcf-ops-manager-pivnet-non-tile bits\"
 
             rm input-pivnet-non-tile-pcf-ops-manager/version input-pivnet-non-tile-pcf-ops-manager/metadata*
 
@@ -433,7 +433,7 @@ jobs:
       params: {IAAS: ((iaas)), PIVNET_API_TOKEN: ((pivnet_token))}
       platform: linux
       run:
-        args: [-exc, "echo \"Copying pivotal-container-service tile bits\"\nTILE_DIRECTORY_PATH=./input-tile-pivotal-container-service\n\
+        args: [-ec, "echo \"Copying pivotal-container-service tile bits\"\nTILE_DIRECTORY_PATH=./input-tile-pivotal-container-service\n\
             TILE_FILE_PATH=`find $TILE_DIRECTORY_PATH -name *.pivotal | sort | head\
             \ -1`\ntile_metadata=$(unzip -l $TILE_FILE_PATH | grep \"metadata\" |\
             \ grep \"ml$\" | awk '{print $NF}' );\nstemcell_version_reqd=$(unzip -p\
@@ -474,7 +474,7 @@ jobs:
       - {name: output-git-pcf-pipelines-utils}
       platform: linux
       run:
-        args: [-exc, 'cd input-git-pcf-pipelines-utils
+        args: [-ec, 'cd input-git-pcf-pipelines-utils
 
             tar cfz ../output-git-pcf-pipelines-utils/pcf-pipelines-utils-tarball.tgz
             .
@@ -502,7 +502,7 @@ jobs:
       - {name: output-docker-pcfnorm-rootfs-latest-docker}
       platform: linux
       run:
-        args: [-exc, 'echo "Exporting pcfnorm-rootfs-latest-docker docker image";
+        args: [-ec, 'echo "Exporting pcfnorm-rootfs-latest-docker docker image";
 
             mkdir export-directory;
 
@@ -546,7 +546,7 @@ jobs:
       - {name: output-docker-czero-cflinuxfs2-latest-docker}
       platform: linux
       run:
-        args: [-exc, 'echo "Exporting czero-cflinuxfs2-latest-docker docker image";
+        args: [-ec, 'echo "Exporting czero-cflinuxfs2-latest-docker docker image";
 
             mkdir export-directory;
 
@@ -590,7 +590,7 @@ jobs:
       - {name: output-docker-czero-rootfs-latest-docker}
       platform: linux
       run:
-        args: [-exc, 'echo "Exporting czero-rootfs-latest-docker docker image";
+        args: [-ec, 'echo "Exporting czero-rootfs-latest-docker docker image";
 
             mkdir export-directory;
 
@@ -634,7 +634,7 @@ jobs:
       - {name: output-docker-pivotalservices-pks-kubectl-latest-docker}
       platform: linux
       run:
-        args: [-exc, 'echo "Exporting pivotalservices-pks-kubectl-latest-docker docker
+        args: [-ec, 'echo "Exporting pivotalservices-pks-kubectl-latest-docker docker
             image";
 
             mkdir export-directory;
@@ -702,47 +702,52 @@ resources:
   source: {repository: pivotalservices/pks-kubectl, tag: latest}
   type: docker-image
 - name: output-git-pcf-pipelines
-  source: {access_key_id: my_access_id, bucket: offline-bucket, endpoint: 'http://10.85.24.5:9000/',
-    regexp: install-pks-run-1/resources/git/pcf-pipelines-tar(.*).tgz, secret_access_key: my_secret_access_key}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), regexp: install-pks-run-1/resources/git/pcf-pipelines-tar(.*).tgz,
+    secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: output-git-nsx-t-ci-pipeline
-  source: {access_key_id: my_access_id, bucket: offline-bucket, endpoint: 'http://10.85.24.5:9000/',
-    regexp: install-pks-run-1/resources/git/nsx-t-ci-pipeline-tar(.*).tgz, secret_access_key: my_secret_access_key}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), regexp: install-pks-run-1/resources/git/nsx-t-ci-pipeline-tar(.*).tgz,
+    secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: output-pivnet-non-tile-pcf-ops-manager
-  source: {access_key_id: my_access_id, bucket: offline-bucket, endpoint: 'http://10.85.24.5:9000/',
-    regexp: install-pks-run-1/resources/pivnet-non-tile/pcf-ops-manager-(.*), secret_access_key: my_secret_access_key}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), regexp: install-pks-run-1/resources/pivnet-non-tile/pcf-ops-manager-(.*),
+    secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: output-tile-pivotal-container-service
-  source: {access_key_id: my_access_id, bucket: offline-bucket, endpoint: 'http://10.85.24.5:9000/',
-    regexp: install-pks-run-1/resources/pivnet-tile/pivotal-container-service/(.*).pivotal,
-    secret_access_key: my_secret_access_key}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), regexp: install-pks-run-1/resources/pivnet-tile/pivotal-container-service/(.*).pivotal,
+    secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: output-tile-stemcell-pivotal-container-service
-  source: {access_key_id: my_access_id, bucket: offline-bucket, endpoint: 'http://10.85.24.5:9000/',
-    regexp: install-pks-run-1/resources/pivnet-tile/pivotal-container-service-tarball/(.*).tgz,
-    secret_access_key: my_secret_access_key}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), regexp: install-pks-run-1/resources/pivnet-tile/pivotal-container-service-tarball/(.*).tgz,
+    secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: output-git-pcf-pipelines-utils
-  source: {access_key_id: my_access_id, bucket: offline-bucket, endpoint: 'http://10.85.24.5:9000/',
-    regexp: install-pks-run-1/resources/git/pcf-pipelines-utils-tar(.*).tgz, secret_access_key: my_secret_access_key}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), regexp: install-pks-run-1/resources/git/pcf-pipelines-utils-tar(.*).tgz,
+    secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: output-docker-pcfnorm-rootfs-latest-docker
-  source: {access_key_id: my_access_id, bucket: offline-bucket, endpoint: 'http://10.85.24.5:9000/',
-    regexp: install-pks-run-1/resources/docker/pcfnorm-rootfs-latest-docker.(.*),
-    secret_access_key: my_secret_access_key}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), regexp: install-pks-run-1/resources/docker/pcfnorm-rootfs-latest-docker.(.*),
+    secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: output-docker-czero-cflinuxfs2-latest-docker
-  source: {access_key_id: my_access_id, bucket: offline-bucket, endpoint: 'http://10.85.24.5:9000/',
-    regexp: install-pks-run-1/resources/docker/czero-cflinuxfs2-latest-docker.(.*),
-    secret_access_key: my_secret_access_key}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), regexp: install-pks-run-1/resources/docker/czero-cflinuxfs2-latest-docker.(.*),
+    secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: output-docker-czero-rootfs-latest-docker
-  source: {access_key_id: my_access_id, bucket: offline-bucket, endpoint: 'http://10.85.24.5:9000/',
-    regexp: install-pks-run-1/resources/docker/czero-rootfs-latest-docker.(.*), secret_access_key: my_secret_access_key}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), regexp: install-pks-run-1/resources/docker/czero-rootfs-latest-docker.(.*),
+    secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: output-docker-pivotalservices-pks-kubectl-latest-docker
-  source: {access_key_id: my_access_id, bucket: offline-bucket, endpoint: 'http://10.85.24.5:9000/',
-    regexp: install-pks-run-1/resources/docker/pivotalservices-pks-kubectl-latest-docker.(.*),
-    secret_access_key: my_secret_access_key}
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), regexp: install-pks-run-1/resources/docker/pivotalservices-pks-kubectl-latest-docker.(.*),
+    secret_access_key: ((final_s3_secret_access_key))}
   type: s3

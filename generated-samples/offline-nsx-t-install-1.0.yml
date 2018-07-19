@@ -26,10 +26,9 @@ jobs:
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
-      - {name: nsxedgegen-nsx-t-gen-worker-latest-docker-tarball}
-      - {name: nsx-t-gen-pipeline-tarball}
-      - {name: nsxt-ansible-tarball}
       - {name: nsx-mgr-ova}
+      - {name: nsxt-ansible-tarball}
+      - {name: nsx-t-gen-pipeline-tarball}
       - {name: nsx-ctrl-ova}
       - {name: nsx-edge-ova}
       - {name: ovftool}
@@ -38,7 +37,7 @@ jobs:
       - {name: nsxt-ansible}
       platform: linux
       run:
-        args: [-exc, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
+        args: [-ec, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsxt-ansible;
             tar -zxf ../nsxt-ansible-tarball/*.tgz; cd ..;cd nsx-t-gen-pipeline; tar
@@ -107,7 +106,6 @@ jobs:
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
-      - {name: nsxedgegen-nsx-t-gen-worker-latest-docker-tarball}
       - {name: nsx-t-gen-pipeline-tarball}
       - {name: nsxt-ansible-tarball}
       outputs:
@@ -115,7 +113,7 @@ jobs:
       - {name: nsxt-ansible}
       platform: linux
       run:
-        args: [-exc, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
+        args: [-ec, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsxt-ansible;
             tar -zxf ../nsxt-ansible-tarball/*.tgz; cd ..;cd nsx-t-gen-pipeline; tar
@@ -143,14 +141,13 @@ jobs:
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
-      - {name: nsxedgegen-nsx-t-gen-worker-latest-docker-tarball}
       - {name: nsx-t-gen-pipeline-tarball}
       - {name: nsxt-ansible-tarball}
       outputs:
       - {name: nsx-t-gen-pipeline}
       platform: linux
       run:
-        args: [-exc, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
+        args: [-ec, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsx-t-gen-pipeline;
             tar -zxf ../nsx-t-gen-pipeline-tarball/*.tgz; cd ..;for token in $(env
@@ -177,10 +174,9 @@ jobs:
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
-      - {name: nsxedgegen-nsx-t-gen-worker-latest-docker-tarball}
-      - {name: nsx-t-gen-pipeline-tarball}
-      - {name: nsxt-ansible-tarball}
       - {name: nsx-mgr-ova}
+      - {name: nsxt-ansible-tarball}
+      - {name: nsx-t-gen-pipeline-tarball}
       - {name: nsx-ctrl-ova}
       - {name: nsx-edge-ova}
       - {name: ovftool}
@@ -189,7 +185,7 @@ jobs:
       - {name: nsxt-ansible}
       platform: linux
       run:
-        args: [-exc, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
+        args: [-ec, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsxt-ansible;
             tar -zxf ../nsxt-ansible-tarball/*.tgz; cd ..;cd nsx-t-gen-pipeline; tar
@@ -215,7 +211,6 @@ jobs:
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
-      - {name: nsxedgegen-nsx-t-gen-worker-latest-docker-tarball}
       - {name: nsx-t-gen-pipeline-tarball}
       - {name: nsxt-ansible-tarball}
       outputs:
@@ -223,7 +218,7 @@ jobs:
       - {name: nsxt-ansible}
       platform: linux
       run:
-        args: [-exc, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
+        args: [-ec, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsxt-ansible;
             tar -zxf ../nsxt-ansible-tarball/*.tgz; cd ..;cd nsx-t-gen-pipeline; tar
@@ -249,14 +244,13 @@ jobs:
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
-      - {name: nsxedgegen-nsx-t-gen-worker-latest-docker-tarball}
       - {name: nsx-t-gen-pipeline-tarball}
       - {name: nsxt-ansible-tarball}
       outputs:
       - {name: nsx-t-gen-pipeline}
       platform: linux
       run:
-        args: [-exc, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
+        args: [-ec, 'find . -name "version" -exec rm {} \; ;find . -name "url" -exec
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsx-t-gen-pipeline;
             tar -zxf ../nsx-t-gen-pipeline-tarball/*.tgz; cd ..;for token in $(env
