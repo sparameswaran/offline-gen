@@ -41,8 +41,8 @@ jobs:
         path: /bin/bash
     task: generate-offline
   - aggregate:
-    - put: analysis-results-file-for-((target_pipeline_name))
-      params: { file: offline-gen-output/analysis-* }
+    # - put: analysis-results-file-for-((target_pipeline_name))
+    #   params: { file: offline-gen-output/analysis-* }
     - put: blobstore-upload-for-((target_pipeline_name))
       params: { file: offline-gen-output/blobstore-* }
     - put: offline-pipeline-for-((target_pipeline_name))
@@ -103,9 +103,9 @@ resources:
   type: s3
   source: {{ pipeline_param_file_source }}
 
-- name: analysis-results-file-for-((target_pipeline_name))
-  type: s3
-  source: {{ analysis_results_filesource }}
+# - name: analysis-results-file-for-((target_pipeline_name))
+#   type: s3
+#   source: {{ analysis_results_filesource }}
 
 - name: blobstore-upload-for-((target_pipeline_name))
   type: s3
@@ -114,7 +114,6 @@ resources:
 - name: offline-pipeline-for-((target_pipeline_name))
   type: s3
   source: {{ offline_pipeline_source }}
-
 
   {% for resource in git_resources %}
 - name: {{ resource['name'] }}

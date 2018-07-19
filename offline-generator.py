@@ -142,15 +142,15 @@ def main():
 def handle_docker_analysis_of_pipelines():
 	global src_pipeline, offline_pipeline
 
-	print('Repo Path:     {}\nPipeline file: {}'.format(repo, pipeline))
+	#print('Repo Path:     {}\nPipeline file: {}'.format(repo, pipeline))
 	src_pipeline = read_config(repo + '/' + pipeline )
 	offline_pipeline = copy.copy(src_pipeline)
 
 	docker_analysis_map = analyze_pipeline_for_docker_images(None, src_pipeline)
 	write_config( docker_analysis_map, analysis_output_file)
 
-	print ''
-	print 'Created docker image analysis of pipeline: ' + analysis_output_file
+	#print ''
+	#print 'Created docker image analysis of pipeline: ' + analysis_output_file
 	return docker_analysis_map
 
 def handle_kickoff_pipeline_generation():
@@ -219,7 +219,7 @@ def save_kickoff_pipeline(git_input_resources, git_only_pipeline_filename):
 		write_config(git_only_pipeline, git_only_pipeline_filename)
 
 		print ''
-		print 'Created full offline analysis pipeline: ' + git_only_pipeline_filename
+		#print 'Created full offline analysis pipeline: ' + git_only_pipeline_filename
 	except Exception as e:
 		print('Error during git only pipeline generation : {}'.format(e))
 		print(traceback.format_exc())
@@ -491,11 +491,11 @@ def identify_all_task_files(target_pipeline):
 
 
 	docker_image_for_git_task_list['target-pipeline'] = docker_image_task_entry
-	print '\nComplete task list\n'
-	pprint(task_files)
-	print '\nComplete git task list\n'
-	pprint(git_task_list)
-	print '\n'
+	# print '\nComplete task list\n'
+	# pprint(task_files)
+	# print '\nComplete git task list\n'
+	# pprint(git_task_list)
+	# print '\n'
 	return task_files
 
 def identify_associated_docker_image_for_task(git_task_list):
@@ -1175,20 +1175,17 @@ def handle_preinlined_task_details(plan, saved_plan_inputs):
 	file_resources_to_move_map = {}
 	offline_resource_map = create_resource_map(offline_pipeline['resources'])
 
+	matching_tarballed_resource = None
 	for original_input in original_task_inputs:
 
 		matching_tarballed_git_resource = None
-		matching_tarballed_resource = offline_resource_map.get(original_input['name'])
-
 		# Check for tarballed resource from offline resources
-		if matching_tarballed_resource is None:
-			matching_tarballed_resource = offline_resource_map.get( original_input['name'] + '-tarball')
+		matching_tarballed_git_resource = offline_resource_map.get( original_input['name'] + '-tarball')
 
-		if matching_tarballed_resource is not None:
+		if matching_tarballed_git_resource is not None:
 			# Add the github tarball as input if its a match against git resources in offline pipeline
-			new_task_inputs.append( { 'name' : matching_tarballed_resource['name'] } )
-			if 'tarball' not in original_input['name']:
-				new_task_outputs.append( { 'name' : original_input['name'] } )
+			new_task_inputs.append( { 'name' : matching_tarballed_git_resource['name'] } )
+			new_task_outputs.append( { 'name' : original_input['name'] } )
 
 			# Use same input name in the map as coming with its registered name
 			tarball_resources_to_extract_map[original_input['name'] ] = original_input['name']
@@ -1201,8 +1198,7 @@ def handle_preinlined_task_details(plan, saved_plan_inputs):
 				new_task_inputs.append( { 'name': original_input['name'] } )
 
 		# Check for aliased resource for matching tarballed resource
-		if matching_tarballed_resource is None and matching_resource is None:
-			# Check for aliased resources
+		if matching_tarballed_git_resource is None and matching_resource is None:
 			aliased_resource_name = original_input['name']
 			original_underlying_resource = alias_resource_map[aliased_resource_name]
 			if original_underlying_resource is not None:
