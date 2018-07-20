@@ -184,6 +184,7 @@ Note: minio does not support auto file versioning unlike AWS S3. So, the offline
 # Notes
 * Make sure the `run_name` in the main input.yml for offline-gen is unique to distinguish across different pipelines/runs. Using the same `run_name` can lead to conflicts or collision of values/folders/files.
 * Automatic run of the blobstore upload pipeline might fail if the supplied params are incomplete. Best to save the pipeline and run it separately with the right parameters so correctly versioned artifacts can be saved into the S3 blobstore.
+* If changes are not getting reflected (like switching branches or target pipeline changes), things might be getting cached. Delete the main offline-gen folder (under s3-bucket/run-name/resources/) from the S3 blobstore, destroy and re-register the kickoff-offline-<pipeline-name> and start-full-generation-for-<pipeline-name> pipelines and regenerate the offline and blostore store upload pipelines from scratch by running the newly registered kickoff and start-full-gen pipelines.
 
 # Running offline-gen directly from command line
 

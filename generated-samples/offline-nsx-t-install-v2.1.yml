@@ -12,7 +12,7 @@ jobs:
   plan:
   - aggregate:
     - {get: nsx-t-gen-pipeline-tarball}
-    - {get: nsxedgegen-nsx-t-gen-worker-latest-docker-tarball}
+    - {get: nsxedgegen-nsx-t-gen-worker-v2.1-docker-tarball}
     - {get: nsxt-ansible-tarball}
     - {get: nsx-mgr-ova}
     - {get: nsx-ctrl-ova}
@@ -22,7 +22,7 @@ jobs:
       image_resource:
         params: {unpack: true}
         source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
-          endpoint: ((final_s3_endpoint)), regexp: install-nsx-t-run-1/resources/docker/nsxedgegen-nsx-t-gen-worker-latest-docker.(.*),
+          endpoint: ((final_s3_endpoint)), regexp: install-nsx-t-run-1/resources/docker/nsxedgegen-nsx-t-gen-worker-v2.1-docker.(.*),
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
@@ -42,7 +42,7 @@ jobs:
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsxt-ansible;
             tar -zxf ../nsxt-ansible-tarball/*.tgz; cd ..;cd nsx-t-gen-pipeline; tar
             -zxf ../nsx-t-gen-pipeline-tarball/*.tgz; cd ..;for token in $(env | grep
-            ''='' | grep "^[A-Z]*" | grep ''=null'' | sed -e ''s/=.*//g'');do export
+            ''='' | grep "^[A-Z]*" | grep ''=null$'' | sed -e ''s/=.*//g'');do export
             ${token}="";  done;echo Starting main task execution!!;nsx-t-gen-pipeline/tasks/install-nsx-t/task.sh']
         path: /bin/bash
     params: &id001 {COMPUTE_MANAGER_CONFIGS: ((compute_manager_configs)), DEFAULTGATEWAY: ((defaultgateway)),
@@ -92,7 +92,7 @@ jobs:
   plan:
   - aggregate:
     - {get: nsx-t-gen-pipeline-tarball}
-    - {get: nsxedgegen-nsx-t-gen-worker-latest-docker-tarball}
+    - {get: nsxedgegen-nsx-t-gen-worker-v2.1-docker-tarball}
     - get: nsxt-ansible-tarball
       params:
         globs: []
@@ -102,7 +102,7 @@ jobs:
       image_resource:
         params: {unpack: true}
         source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
-          endpoint: ((final_s3_endpoint)), regexp: install-nsx-t-run-1/resources/docker/nsxedgegen-nsx-t-gen-worker-latest-docker.(.*),
+          endpoint: ((final_s3_endpoint)), regexp: install-nsx-t-run-1/resources/docker/nsxedgegen-nsx-t-gen-worker-v2.1-docker.(.*),
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
@@ -118,7 +118,7 @@ jobs:
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsxt-ansible;
             tar -zxf ../nsxt-ansible-tarball/*.tgz; cd ..;cd nsx-t-gen-pipeline; tar
             -zxf ../nsx-t-gen-pipeline-tarball/*.tgz; cd ..;for token in $(env | grep
-            ''='' | grep "^[A-Z]*" | grep ''=null'' | sed -e ''s/=.*//g'');do export
+            ''='' | grep "^[A-Z]*" | grep ''=null$'' | sed -e ''s/=.*//g'');do export
             ${token}="";  done;echo Starting main task execution!!;nsx-t-gen-pipeline/tasks/add-nsx-t-routers/task.sh']
         path: /bin/bash
     params: *id001
@@ -127,7 +127,7 @@ jobs:
   plan:
   - aggregate:
     - {get: nsx-t-gen-pipeline-tarball}
-    - {get: nsxedgegen-nsx-t-gen-worker-latest-docker-tarball}
+    - {get: nsxedgegen-nsx-t-gen-worker-v2.1-docker-tarball}
     - get: nsxt-ansible-tarball
       params:
         globs: []
@@ -137,7 +137,7 @@ jobs:
       image_resource:
         params: {unpack: true}
         source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
-          endpoint: ((final_s3_endpoint)), regexp: install-nsx-t-run-1/resources/docker/nsxedgegen-nsx-t-gen-worker-latest-docker.(.*),
+          endpoint: ((final_s3_endpoint)), regexp: install-nsx-t-run-1/resources/docker/nsxedgegen-nsx-t-gen-worker-v2.1-docker.(.*),
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
@@ -151,7 +151,7 @@ jobs:
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsx-t-gen-pipeline;
             tar -zxf ../nsx-t-gen-pipeline-tarball/*.tgz; cd ..;for token in $(env
-            | grep ''='' | grep "^[A-Z]*" | grep ''=null'' | sed -e ''s/=.*//g'');do
+            | grep ''='' | grep "^[A-Z]*" | grep ''=null$'' | sed -e ''s/=.*//g'');do
             export ${token}="";  done;echo Starting main task execution!!;nsx-t-gen-pipeline/tasks/config-nsx-t-extras/task.sh']
         path: /bin/bash
     params: *id001
@@ -160,7 +160,7 @@ jobs:
   plan:
   - aggregate:
     - {get: nsx-t-gen-pipeline-tarball}
-    - {get: nsxedgegen-nsx-t-gen-worker-latest-docker-tarball}
+    - {get: nsxedgegen-nsx-t-gen-worker-v2.1-docker-tarball}
     - {get: nsxt-ansible-tarball}
     - {get: nsx-mgr-ova}
     - {get: nsx-ctrl-ova}
@@ -170,7 +170,7 @@ jobs:
       image_resource:
         params: {unpack: true}
         source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
-          endpoint: ((final_s3_endpoint)), regexp: install-nsx-t-run-1/resources/docker/nsxedgegen-nsx-t-gen-worker-latest-docker.(.*),
+          endpoint: ((final_s3_endpoint)), regexp: install-nsx-t-run-1/resources/docker/nsxedgegen-nsx-t-gen-worker-v2.1-docker.(.*),
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
@@ -190,7 +190,7 @@ jobs:
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsxt-ansible;
             tar -zxf ../nsxt-ansible-tarball/*.tgz; cd ..;cd nsx-t-gen-pipeline; tar
             -zxf ../nsx-t-gen-pipeline-tarball/*.tgz; cd ..;for token in $(env | grep
-            ''='' | grep "^[A-Z]*" | grep ''=null'' | sed -e ''s/=.*//g'');do export
+            ''='' | grep "^[A-Z]*" | grep ''=null$'' | sed -e ''s/=.*//g'');do export
             ${token}="";  done;echo Starting main task execution!!;nsx-t-gen-pipeline/tasks/install-nsx-t/task.sh']
         path: /bin/bash
     params: *id001
@@ -199,7 +199,7 @@ jobs:
   plan:
   - aggregate:
     - {get: nsx-t-gen-pipeline-tarball}
-    - {get: nsxedgegen-nsx-t-gen-worker-latest-docker-tarball}
+    - {get: nsxedgegen-nsx-t-gen-worker-v2.1-docker-tarball}
     - get: nsxt-ansible-tarball
       params:
         globs: []
@@ -207,7 +207,7 @@ jobs:
       image_resource:
         params: {unpack: true}
         source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
-          endpoint: ((final_s3_endpoint)), regexp: install-nsx-t-run-1/resources/docker/nsxedgegen-nsx-t-gen-worker-latest-docker.(.*),
+          endpoint: ((final_s3_endpoint)), regexp: install-nsx-t-run-1/resources/docker/nsxedgegen-nsx-t-gen-worker-v2.1-docker.(.*),
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
@@ -223,7 +223,7 @@ jobs:
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsxt-ansible;
             tar -zxf ../nsxt-ansible-tarball/*.tgz; cd ..;cd nsx-t-gen-pipeline; tar
             -zxf ../nsx-t-gen-pipeline-tarball/*.tgz; cd ..;for token in $(env | grep
-            ''='' | grep "^[A-Z]*" | grep ''=null'' | sed -e ''s/=.*//g'');do export
+            ''='' | grep "^[A-Z]*" | grep ''=null$'' | sed -e ''s/=.*//g'');do export
             ${token}="";  done;echo Starting main task execution!!;nsx-t-gen-pipeline/tasks/add-nsx-t-routers/task.sh']
         path: /bin/bash
     params: *id001
@@ -232,7 +232,7 @@ jobs:
   plan:
   - aggregate:
     - {get: nsx-t-gen-pipeline-tarball}
-    - {get: nsxedgegen-nsx-t-gen-worker-latest-docker-tarball}
+    - {get: nsxedgegen-nsx-t-gen-worker-v2.1-docker-tarball}
     - get: nsxt-ansible-tarball
       params:
         globs: []
@@ -240,7 +240,7 @@ jobs:
       image_resource:
         params: {unpack: true}
         source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
-          endpoint: ((final_s3_endpoint)), regexp: install-nsx-t-run-1/resources/docker/nsxedgegen-nsx-t-gen-worker-latest-docker.(.*),
+          endpoint: ((final_s3_endpoint)), regexp: install-nsx-t-run-1/resources/docker/nsxedgegen-nsx-t-gen-worker-v2.1-docker.(.*),
           secret_access_key: ((final_s3_secret_access_key))}
         type: s3
       inputs:
@@ -254,7 +254,7 @@ jobs:
             rm {} \; ;for file in $(find . -name "*-1.0");do new_file=$(echo $file
             | sed -e ''s/-1.0$//g'');mv ${file} ${new_file};done;ls -R;cd nsx-t-gen-pipeline;
             tar -zxf ../nsx-t-gen-pipeline-tarball/*.tgz; cd ..;for token in $(env
-            | grep ''='' | grep "^[A-Z]*" | grep ''=null'' | sed -e ''s/=.*//g'');do
+            | grep ''='' | grep "^[A-Z]*" | grep ''=null$'' | sed -e ''s/=.*//g'');do
             export ${token}="";  done;echo Starting main task execution!!;nsx-t-gen-pipeline/tasks/config-nsx-t-extras/task.sh']
         path: /bin/bash
     params: *id001
@@ -292,8 +292,8 @@ resources:
     endpoint: ((final_s3_endpoint)), regexp: install-nsx-t-run-1/resources/file/ovftool-*-(.*),
     secret_access_key: ((final_s3_secret_access_key))}
   type: s3
-- name: nsxedgegen-nsx-t-gen-worker-latest-docker-tarball
+- name: nsxedgegen-nsx-t-gen-worker-v2.1-docker-tarball
   source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
-    endpoint: ((final_s3_endpoint)), regexp: install-nsx-t-run-1/resources/docker/nsxedgegen-nsx-t-gen-worker-latest-docker.(.*),
+    endpoint: ((final_s3_endpoint)), regexp: install-nsx-t-run-1/resources/docker/nsxedgegen-nsx-t-gen-worker-v2.1-docker.(.*),
     secret_access_key: ((final_s3_secret_access_key))}
   type: s3
