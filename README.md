@@ -17,7 +17,7 @@ Generate two separate pipelines that handle:
   * Non-Pivnet Tiles (like Ops Mgr Ova file)
 * Offline Pipeline: uses only offlined version of resources saved in S3 Blobstore
 
-##Offline-gen Design
+ * Offline-gen Design
 <div><img src="images/offline-gen-arch.png" width="500"/></div>
 
 The tool requires a s3 compatible blobstore like minio to be running and accessible from the concourse pipelines.
