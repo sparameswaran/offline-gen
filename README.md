@@ -18,9 +18,9 @@ Generate two separate pipelines that handle:
 * Offline Pipeline: uses only offlined version of resources saved in S3 Blobstore
 
  * Offline-gen Design
-<div><img src="images/offline-gen-arch.png" width="500"/></div>
+<div><img src="images/offline-gen-arch.png" width="600"/></div>
 
-The tool requires a s3 compatible blobstore like minio to be running and accessible from the concourse pipelines.
+The tool requires a S3 compatible blobstore like minio to be running and accessible from the concourse pipelines.
 
 The generated offline and blobstore pipelines would refer to parameterized s3 blobstore to store and save artifacts.
 
