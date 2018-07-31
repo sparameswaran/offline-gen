@@ -271,6 +271,13 @@ def handle_inline_parameterization_of_s3blobstore(content):
 
 				for key in s3blobstore_replacement_token_map:
 					source[key] = '((%s))' % (s3blobstore_replacement_token_map[key])
+
+				# Replace the actual run name in the regexp to 'offline_run_id' label
+				# so it can be overridden or left empty string
+				# Example: regexp: test1/resources/pivnet-tile/pivotal-container-service/(.*).pivotal
+				# Replace this with: ((offline_run_id))/resources/pivnet-tile/pivotal-container-service/(.*).pivotal
+				source['regexp'] = source['regexp'].replace(RUN_NAME, '((offline_run_id))')
+
 			else:
 				handle_inline_parameterization_of_s3blobstore(content[key])
 

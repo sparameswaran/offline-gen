@@ -11,7 +11,7 @@ pipeline: pipelines/nsx-t-install.yml   # Relative path to the target pipeline f
 repo: workspace/nsx-t-gen                    # Path to the target pipeline repo if its local
 
 # Run Id - EDIT ME
-run_name: install-nsx-t-run-1                         # Unique identifier to distinguish the run
+offline_run_id: install-nsx-t-run-1                         # Unique identifier to distinguish the run
 
 # Concourse Login/auth
 concourse_team: basic

@@ -182,7 +182,7 @@ Note: minio does not support auto file versioning unlike AWS S3. So, the offline
   <div><img src="images/install-in-offlinemode.png" width="400"/></div>
 
 # Notes
-* Make sure the `run_name` in the main input.yml for offline-gen is unique to distinguish across different pipelines/runs. Using the same `run_name` can lead to conflicts or collision of values/folders/files.
+* Make sure the `offline_run_id` in the main input.yml for offline-gen is unique to distinguish across different pipelines/runs. Using the same `offline_run_id` can lead to conflicts or collision of values/folders/files.
 * Automatic run of the blobstore upload pipeline might fail if the supplied params are incomplete. Best to save the pipeline and run it separately with the right parameters so correctly versioned artifacts can be saved into the S3 blobstore.
 * If changes are not getting reflected (like switching branches or target pipeline changes), things might be getting cached. Delete the main offline-gen folder (under s3-bucket/run-name/resources/) from the S3 blobstore, destroy and re-register the kickoff-offline-<pipeline-name> and start-full-generation-for-<pipeline-name> pipelines and regenerate the offline and blostore store upload pipelines from scratch by running the newly registered kickoff and start-full-gen pipelines.
 
@@ -240,5 +240,5 @@ Requires python libraries specified in requirements.txt
 
 * Requires Concourse install to use basic auth (to auto-register and execute dynamically generated concourse pipelines)
 * The blobstore upload portion requires access to online resources (to pull github repos, docker images, pivnet tiles etc) as well as Pivotal Network Token to download tiles/products. So, the automatic run of the blobstore upload pipeline might fail if the supplied params are incomplete. Best to save the pipeline and run it separately with the right parameters so correctly versioned artifacts can be saved into the S3 blobstore.
-* Use unique `run_name` id to distinguish pipelines, artifacts across various runs (as already mentioned).
+* Use unique `offline_run_id` id to distinguish pipelines, artifacts across various runs (as already mentioned).
 * Download of parameterized resources like github repos with dynamic branch specified as parameter requires the kickoff portion to have access to the github branch as parameter. For tile or product that requires version parameters to be supplied during actual execution, these need to be supplied during blobstore upload pipeline execution to save the correct matching versions into S3 blobstore.
