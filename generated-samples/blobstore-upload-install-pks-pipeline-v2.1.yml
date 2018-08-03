@@ -119,11 +119,11 @@ jobs:
               \  pivnet-cli download-product-files -p \"stemcells\" -r $stemcell_version_reqd\
               \ -g \"*${IAAS}*\" --accept-eula\n  if [ $? != 0 ]; then\n   min_version=$(echo\
               \ $stemcell_version_reqd | awk -F '.' '{print $2}')\n   if [ \"$min_version\"\
-              \ == \"\" ]; then\n     for min_version in $(seq 0  100)\n     do\n\
+              \ == \"\" ]; then\n     for min_version in $(seq 100 -1 0)\n     do\n\
               \        pivnet-cli download-product-files -p \"stemcells\" -r $stemcell_version_reqd.$min_version\
               \ -g \"*${IAAS}*\" --accept-eula && break\n     done\n   else\n    \
               \ echo \"Stemcell version $stemcell_version_reqd not found !!, giving\
-              \ up\"\n     exit 1\n   fi\n  fi\n\n  SC_FILE_PATH=`find ./ -name bosh*.tgz`;\n\
+              \ up\"\n     exit 1\n   fi\n  fi\n\n  SC_FILE_PATH=`find ./ -name "bosh*.tgz" | sort | tail -1 || true`;\n\
               \  if [ -f \"$SC_FILE_PATH\" ]; then\n    echo \"Stemcell file found!\"\
               \n  else\n    echo \"Stemcell file not found!\";\n    exit 1;\n  fi\n\
               fi\n\nif [ \"$SC_FILE_PATH\" != \"\" ]; then\n  cp $SC_FILE_PATH input-tile-pivotal-container-service\n\
@@ -444,11 +444,11 @@ jobs:
             \ download-product-files -p \"stemcells\" -r $stemcell_version_reqd -g\
             \ \"*${IAAS}*\" --accept-eula\n  if [ $? != 0 ]; then\n   min_version=$(echo\
             \ $stemcell_version_reqd | awk -F '.' '{print $2}')\n   if [ \"$min_version\"\
-            \ == \"\" ]; then\n     for min_version in $(seq 0  100)\n     do\n  \
+            \ == \"\" ]; then\n     for min_version in $(seq 100 -1 0)\n     do\n  \
             \      pivnet-cli download-product-files -p \"stemcells\" -r $stemcell_version_reqd.$min_version\
             \ -g \"*${IAAS}*\" --accept-eula && break\n     done\n   else\n     echo\
             \ \"Stemcell version $stemcell_version_reqd not found !!, giving up\"\n\
-            \     exit 1\n   fi\n  fi\n  SC_FILE_PATH=`find ./ -name bosh*.tgz`;\n\
+            \     exit 1\n   fi\n  fi\n  SC_FILE_PATH=`find ./ -name "bosh*.tgz" | sort | tail -1 || true`;\n\
             \  if [ -f \"$SC_FILE_PATH\" ]; then\n    echo \"Stemcell file found!\"\
             \n  else\n    echo \"Stemcell file not found!\";\n    exit 1;\n  fi\n\
             fi\n\nif [ \"$SC_FILE_PATH\" != \"\" ]; then\n  cp $SC_FILE_PATH input-tile-pivotal-container-service\n\
