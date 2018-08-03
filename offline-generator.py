@@ -98,7 +98,8 @@ def main():
 	pipeline_name_tokens = pipeline.split('/')
 	target_pipeline_name = pipeline_name_tokens[len(pipeline_name_tokens) - 1]
 
-	RUN_NAME = handler_config['run_name'] if handler_config.get('run_name') is not None else 'Run1'
+	RUN_NAME = handler_config['offline_run_id'] if handler_config.get('offline_run_id') is not None else 'Run1'
+	print 'Using Offline Run Id : {}'.format(RUN_NAME)
 
 	github_raw_content = handler_config.get('github_raw_content')
 	if github_raw_content is None:
