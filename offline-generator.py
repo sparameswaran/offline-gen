@@ -454,6 +454,7 @@ def identify_associated_docker_image_for_task(git_task_list):
 					full_docker_ref.append(docker_repo)
 
 		docker_image_for_git_task_list[git_repo_id] = docker_image_task_entry
+		#print 'Full Docker image task entry: {}'.format(docker_image_task_entry)
 
 def load_github_resource(git_repo_id, git_remote_uri, task_file_path):
 	try:
@@ -840,6 +841,7 @@ def inline_task_details(plan, alias_resource_map, ref_map_target_job_name, saved
 	# 				given_task_file, saved_plan_inputs)
 
 	task_defn_found = False
+	source_bucket_details = None
 	for task_defn_map in docker_image_analysis_map['pipeline_task_docker_references'][git_resource_id]['task_defns']:
 		if task_defn_found:
 			break
@@ -882,6 +884,9 @@ def inline_task_details(plan, alias_resource_map, ref_map_target_job_name, saved
 
 	plan['config'] = { 'platform' : 'linux', 'image_resource': docker_image_source }
 
+	# print '\n## Task: {}  and original_task_script: {}\n'.format(given_task_name,
+	# 													original_task_script)
+
 	# Pass the docker image tarball as input
 	inline_remaining_plan_config(plan,
 								alias_resource_map,
@@ -890,8 +895,6 @@ def inline_task_details(plan, alias_resource_map, ref_map_target_job_name, saved
 								original_task_outputs,
 								original_task_script)
 
-	#print '\n## Task: {} Original Task Inputs: {} and original_task_script: {}\n'.format(given_task_name,
-	# 														given_task_inputs, given_task_script)
 
 
 def inline_remaining_plan_config(plan,
