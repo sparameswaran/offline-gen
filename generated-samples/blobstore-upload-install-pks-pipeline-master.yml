@@ -3,9 +3,9 @@ groups:
   name: parallel-kickoff
 - jobs: [kickoff-pcf-pipelines-upload-to-blobstore, kickoff-nsx-t-ci-pipeline-upload-to-blobstore,
     kickoff-pcf-ops-manager-upload-to-blobstore, kickoff-pivotal-container-service-upload-to-blobstore,
-    kickoff-pcf-pipelines-utils-upload-to-blobstore, kickoff-pcfnorm-rootfs-latest-docker-upload-to-blobstore,
-    kickoff-czero-cflinuxfs2-latest-docker-upload-to-blobstore, kickoff-czero-rootfs-latest-docker-upload-to-blobstore,
-    kickoff-pivotalservices-pks-kubectl-latest-docker-upload-to-blobstore]
+    kickoff-pcf-pipelines-utils-upload-to-blobstore, kickoff-harbor-container-registry-upload-to-blobstore,
+    kickoff-pcfnorm-rootfs-latest-docker-upload-to-blobstore, kickoff-czero-cflinuxfs2-latest-docker-upload-to-blobstore,
+    kickoff-czero-rootfs-latest-docker-upload-to-blobstore, kickoff-pivotalservices-pks-kubectl-latest-docker-upload-to-blobstore]
   name: individual-kickoff
 jobs:
 - name: parallel-kickoff
@@ -20,6 +20,9 @@ jobs:
       params:
         globs: ['*.pivotal']
     - {get: input-git-pcf-pipelines-utils}
+    - get: input-tile-harbor-container-registry
+      params:
+        globs: ['*.pivotal']
     - get: input-docker-pcfnorm-rootfs-latest-docker
       params: {rootfs: true}
     - get: input-docker-czero-cflinuxfs2-latest-docker
@@ -114,7 +117,7 @@ jobs:
               \ | grep \"ml$\" | awk '{print $NF}' );\nstemcell_version_reqd=$(unzip\
               \ -p $TILE_FILE_PATH $tile_metadata | grep -A4 s\"stemcell_criteria:\"\
               \ | grep \"version:\"  | grep -Ei \"[0-9]{2,}\" | awk '{print $NF}'\
-              \ | sed -e \"s/'//g;s/\\"//g\"  );\nif [ \"$stemcell_version_reqd\"\
+              \ | sed -e \"s/'//g;s/\\\"//g\"  );\nif [ \"$stemcell_version_reqd\"\
               \ != \"\" ]; then\n  pivnet-cli login --api-token=$PIVNET_API_TOKEN\n\
               \  pivnet-cli download-product-files -p \"stemcells\" -r $stemcell_version_reqd\
               \ -g \"*${IAAS}*\" --accept-eula\n  if [ $? != 0 ]; then\n   min_version=$(echo\
@@ -123,10 +126,11 @@ jobs:
               \        pivnet-cli download-product-files -p \"stemcells\" -r $stemcell_version_reqd.$min_version\
               \ -g \"*${IAAS}*\" --accept-eula && break\n     done\n   else\n    \
               \ echo \"Stemcell version $stemcell_version_reqd not found !!, giving\
-              \ up\"\n     exit 1\n   fi\n  fi\n\n  SC_FILE_PATH=`find ./ -name \"bosh*.tgz\" | sort | tail -1 || true`;\n\
-              \  if [ -f \"$SC_FILE_PATH\" ]; then\n    echo \"Stemcell file found!\"\
-              \n  else\n    echo \"Stemcell file not found!\";\n    exit 1;\n  fi\n\
-              fi\n\nif [ \"$SC_FILE_PATH\" != \"\" ]; then\n  cp $SC_FILE_PATH input-tile-pivotal-container-service\n\
+              \ up\"\n     exit 1\n   fi\n  fi\n\n  SC_FILE_PATH=`find ./ -name \"\
+              bosh*.tgz\" | sort | tail -1 || true `;\n  if [ -f \"$SC_FILE_PATH\"\
+              \ ]; then\n    echo \"Stemcell file found!\"\n  else\n    echo \"Stemcell\
+              \ file not found!\";\n    exit 1;\n  fi\nfi\n\nif [ \"$SC_FILE_PATH\"\
+              \ != \"\" ]; then\n  cp $SC_FILE_PATH input-tile-pivotal-container-service\n\
               fi\n\ncd input-tile-pivotal-container-service\ntar cfz ../output-tile-stemcell-pivotal-container-service/pivotal-container-service-tarball.tgz\
               \ \\\n      *.pivotal bosh*tgz || true\ncd ..\nmv $TILE_FILE_PATH output-tile-pivotal-container-service\n\
               ls -l output-tile-pivotal-container-service/ output-tile-stemcell-pivotal-container-service/\n"]
@@ -154,6 +158,43 @@ jobs:
               ']
           path: /bin/bash
       task: prepare-git-pcf-pipelines-utils-bit-to-export
+    - config:
+        image_resource:
+          source: {repository: czero/cflinuxfs2}
+          type: docker-image
+        inputs:
+        - {name: input-tile-harbor-container-registry}
+        outputs:
+        - {name: output-tile-harbor-container-registry}
+        - {name: output-tile-stemcell-harbor-container-registry}
+        params: {IAAS: ((iaas)), PIVNET_API_TOKEN: ((pivnet_token))}
+        platform: linux
+        run:
+          args: [-ec, "echo \"Copying harbor-container-registry tile bits\"\nTILE_DIRECTORY_PATH=./input-tile-harbor-container-registry\n\
+              TILE_FILE_PATH=`find $TILE_DIRECTORY_PATH -name *.pivotal | sort | head\
+              \ -1`\ntile_metadata=$(unzip -l $TILE_FILE_PATH | grep \"metadata\"\
+              \ | grep \"ml$\" | awk '{print $NF}' );\nstemcell_version_reqd=$(unzip\
+              \ -p $TILE_FILE_PATH $tile_metadata | grep -A4 s\"stemcell_criteria:\"\
+              \ | grep \"version:\"  | grep -Ei \"[0-9]{2,}\" | awk '{print $NF}'\
+              \ | sed -e \"s/'//g;s/\\\"//g\"  );\nif [ \"$stemcell_version_reqd\"\
+              \ != \"\" ]; then\n  pivnet-cli login --api-token=$PIVNET_API_TOKEN\n\
+              \  pivnet-cli download-product-files -p \"stemcells\" -r $stemcell_version_reqd\
+              \ -g \"*${IAAS}*\" --accept-eula\n  if [ $? != 0 ]; then\n   min_version=$(echo\
+              \ $stemcell_version_reqd | awk -F '.' '{print $2}')\n   if [ \"$min_version\"\
+              \ == \"\" ]; then\n     for min_version in $(seq 100 -1 0)\n     do\n\
+              \        pivnet-cli download-product-files -p \"stemcells\" -r $stemcell_version_reqd.$min_version\
+              \ -g \"*${IAAS}*\" --accept-eula && break\n     done\n   else\n    \
+              \ echo \"Stemcell version $stemcell_version_reqd not found !!, giving\
+              \ up\"\n     exit 1\n   fi\n  fi\n\n  SC_FILE_PATH=`find ./ -name \"\
+              bosh*.tgz\" | sort | tail -1 || true `;\n  if [ -f \"$SC_FILE_PATH\"\
+              \ ]; then\n    echo \"Stemcell file found!\"\n  else\n    echo \"Stemcell\
+              \ file not found!\";\n    exit 1;\n  fi\nfi\n\nif [ \"$SC_FILE_PATH\"\
+              \ != \"\" ]; then\n  cp $SC_FILE_PATH input-tile-harbor-container-registry\n\
+              fi\n\ncd input-tile-harbor-container-registry\ntar cfz ../output-tile-stemcell-harbor-container-registry/harbor-container-registry-tarball.tgz\
+              \ \\\n      *.pivotal bosh*tgz || true\ncd ..\nmv $TILE_FILE_PATH output-tile-harbor-container-registry\n\
+              ls -l output-tile-harbor-container-registry/ output-tile-stemcell-harbor-container-registry/\n"]
+          path: /bin/bash
+      task: prepare-tile-harbor-container-registry-bits-to-export
     - config:
         image_resource:
           source: {repository: ubuntu}
@@ -322,6 +363,10 @@ jobs:
       put: output-tile-stemcell-pivotal-container-service
     - params: {file: output-git-pcf-pipelines-utils/pcf-pipelines-utils-tarball.tgz}
       put: output-git-pcf-pipelines-utils
+    - params: {file: output-tile-harbor-container-registry/*.pivotal}
+      put: output-tile-harbor-container-registry
+    - params: {file: output-tile-stemcell-harbor-container-registry/harbor-container-registry-*.tgz}
+      put: output-tile-stemcell-harbor-container-registry
     - params: {file: output-docker-pcfnorm-rootfs-latest-docker/pcfnorm-rootfs-latest-docker*.tgz}
       put: output-docker-pcfnorm-rootfs-latest-docker
     - params: {file: output-docker-czero-cflinuxfs2-latest-docker/czero-cflinuxfs2-latest-docker*.tgz}
@@ -439,20 +484,22 @@ jobs:
             \ grep \"ml$\" | awk '{print $NF}' );\nstemcell_version_reqd=$(unzip -p\
             \ $TILE_FILE_PATH $tile_metadata | grep -A4 \"stemcell_criteria:\" | grep\
             \ \"version:\"  | grep -Ei \"[0-9]{2,}\" | awk '{print $NF}' | sed -e\
-            \ \"s/'//g;s/\\\"//g\"  );\nif [ \"$stemcell_version_reqd\" != \"\"\
-            \ ]; then\n  pivnet-cli login --api-token=$PIVNET_API_TOKEN\n  pivnet-cli\
+            \ \"s/'//g;s/\\\"//g\"  );\nif [ \"$stemcell_version_reqd\" != \"\" ];\
+            \ then\n  pivnet-cli login --api-token=$PIVNET_API_TOKEN\n  pivnet-cli\
             \ download-product-files -p \"stemcells\" -r $stemcell_version_reqd -g\
             \ \"*${IAAS}*\" --accept-eula\n  if [ $? != 0 ]; then\n   min_version=$(echo\
-            \ $stemcell_version_reqd | awk -F '.' '{print $2}')\n   if [ \"$min_version\"\
-            \ == \"\" ]; then\n     for min_version in $(seq 100 -1 0)\n     do\n  \
-            \      pivnet-cli download-product-files -p \"stemcells\" -r $stemcell_version_reqd.$min_version\
+            \ $stemcell_version_reqd | awk -F '.' '{print $2}')\n   major_version=$(echo\
+            \ $stemcell_version_reqd | awk -F '.' '{print $1}')\n   if [ \"$min_version\"\
+            \ == \"\" ]; then\n     for min_version in $(seq 100 -1 0)\n     do\n\
+            \        pivnet-cli download-product-files -p \"stemcells\" -r $major_version.$min_version\
             \ -g \"*${IAAS}*\" --accept-eula && break\n     done\n   else\n     echo\
             \ \"Stemcell version $stemcell_version_reqd not found !!, giving up\"\n\
-            \     exit 1\n   fi\n  fi\n  SC_FILE_PATH=`find ./ -name \"bosh*.tgz\" | sort | tail -1 || true`;\n\
-            \  if [ -f \"$SC_FILE_PATH\" ]; then\n    echo \"Stemcell file found!\"\
-            \n  else\n    echo \"Stemcell file not found!\";\n    exit 1;\n  fi\n\
-            fi\n\nif [ \"$SC_FILE_PATH\" != \"\" ]; then\n  cp $SC_FILE_PATH input-tile-pivotal-container-service\n\
-            fi\n\ncd input-tile-pivotal-container-service\ntar cfz ../output-tile-stemcell-pivotal-container-service/pivotal-container-service-tarball.tgz\
+            \     exit 1\n   fi\n  fi\n  SC_FILE_PATH=`find ./ -name \"bosh*.tgz\"\
+            \ | sort | tail -1`;\n  if [ -f \"$SC_FILE_PATH\" ]; then\n    echo \"\
+            Stemcell file found!\"\n  else\n    echo \"Stemcell file not found!\"\
+            ;\n    exit 1;\n  fi\nfi\n\nif [ \"$SC_FILE_PATH\" != \"\" ]; then\n \
+            \ cp $SC_FILE_PATH input-tile-pivotal-container-service\nfi\n\ncd input-tile-pivotal-container-service\n\
+            tar cfz ../output-tile-stemcell-pivotal-container-service/pivotal-container-service-tarball.tgz\
             \ \\\n      *.pivotal bosh*tgz || true\ncd ..\nmv $TILE_FILE_PATH output-tile-pivotal-container-service\n\
             ls -l output-tile-pivotal-container-service/ output-tile-stemcell-pivotal-container-service/\n"]
         path: /bin/bash
@@ -489,6 +536,53 @@ jobs:
     task: prepare-git-pcf-pipelines-utils-bit-to-export
   - params: {file: output-git-pcf-pipelines-utils/pcf-pipelines-utils-tarball.tgz}
     put: output-git-pcf-pipelines-utils
+- name: kickoff-harbor-container-registry-upload-to-blobstore
+  plan:
+  - get: input-tile-harbor-container-registry
+    params:
+      globs: ['*.pivotal']
+  - config:
+      image_resource:
+        source: {repository: czero/cflinuxfs2}
+        type: docker-image
+      inputs:
+      - {name: input-tile-harbor-container-registry}
+      outputs:
+      - {name: output-tile-harbor-container-registry}
+      - {name: output-tile-stemcell-harbor-container-registry}
+      params: {IAAS: ((iaas)), PIVNET_API_TOKEN: ((pivnet_token))}
+      platform: linux
+      run:
+        args: [-ec, "echo \"Copying harbor-container-registry tile bits\"\nTILE_DIRECTORY_PATH=./input-tile-harbor-container-registry\n\
+            TILE_FILE_PATH=`find $TILE_DIRECTORY_PATH -name *.pivotal | sort | head\
+            \ -1`\ntile_metadata=$(unzip -l $TILE_FILE_PATH | grep \"metadata\" |\
+            \ grep \"ml$\" | awk '{print $NF}' );\nstemcell_version_reqd=$(unzip -p\
+            \ $TILE_FILE_PATH $tile_metadata | grep -A4 \"stemcell_criteria:\" | grep\
+            \ \"version:\"  | grep -Ei \"[0-9]{2,}\" | awk '{print $NF}' | sed -e\
+            \ \"s/'//g;s/\\\"//g\"  );\nif [ \"$stemcell_version_reqd\" != \"\" ];\
+            \ then\n  pivnet-cli login --api-token=$PIVNET_API_TOKEN\n  pivnet-cli\
+            \ download-product-files -p \"stemcells\" -r $stemcell_version_reqd -g\
+            \ \"*${IAAS}*\" --accept-eula\n  if [ $? != 0 ]; then\n   min_version=$(echo\
+            \ $stemcell_version_reqd | awk -F '.' '{print $2}')\n   major_version=$(echo\
+            \ $stemcell_version_reqd | awk -F '.' '{print $1}')\n   if [ \"$min_version\"\
+            \ == \"\" ]; then\n     for min_version in $(seq 100 -1 0)\n     do\n\
+            \        pivnet-cli download-product-files -p \"stemcells\" -r $major_version.$min_version\
+            \ -g \"*${IAAS}*\" --accept-eula && break\n     done\n   else\n     echo\
+            \ \"Stemcell version $stemcell_version_reqd not found !!, giving up\"\n\
+            \     exit 1\n   fi\n  fi\n  SC_FILE_PATH=`find ./ -name \"bosh*.tgz\"\
+            \ | sort | tail -1`;\n  if [ -f \"$SC_FILE_PATH\" ]; then\n    echo \"\
+            Stemcell file found!\"\n  else\n    echo \"Stemcell file not found!\"\
+            ;\n    exit 1;\n  fi\nfi\n\nif [ \"$SC_FILE_PATH\" != \"\" ]; then\n \
+            \ cp $SC_FILE_PATH input-tile-harbor-container-registry\nfi\n\ncd input-tile-harbor-container-registry\n\
+            tar cfz ../output-tile-stemcell-harbor-container-registry/harbor-container-registry-tarball.tgz\
+            \ \\\n      *.pivotal bosh*tgz || true\ncd ..\nmv $TILE_FILE_PATH output-tile-harbor-container-registry\n\
+            ls -l output-tile-harbor-container-registry/ output-tile-stemcell-harbor-container-registry/\n"]
+        path: /bin/bash
+    task: prepare-tile-harbor-container-registry-bits-to-export
+  - params: {file: output-tile-harbor-container-registry/*.pivotal}
+    put: output-tile-harbor-container-registry
+  - params: {file: output-tile-stemcell-harbor-container-registry/harbor-container-registry-*.tgz}
+    put: output-tile-stemcell-harbor-container-registry
 - name: kickoff-pcfnorm-rootfs-latest-docker-upload-to-blobstore
   plan:
   - get: input-docker-pcfnorm-rootfs-latest-docker
@@ -690,6 +784,10 @@ resources:
 - name: input-git-pcf-pipelines-utils
   source: {uri: 'https://github.com/pivotalservices/concourse-pipeline-samples.git'}
   type: git
+- name: input-tile-harbor-container-registry
+  source: {api_token: ((pivnet_token)), product_slug: harbor-container-registry, product_version: ((harbor_product_version)),
+    sort_by: semver}
+  type: pivnet
 - name: input-docker-pcfnorm-rootfs-latest-docker
   source: {repository: pcfnorm/rootfs, tag: latest}
   type: docker-image
@@ -724,12 +822,22 @@ resources:
   type: s3
 - name: output-tile-stemcell-pivotal-container-service
   source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
-    endpoint: ((final_s3_endpoint)), regexp: ((offline_run_id))/resources/pivnet-tile/pivotal-container-service-tarball/(.*).tgz,
+    endpoint: ((final_s3_endpoint)), regexp: ((offline_run_id))/resources/pivnet-tile/harbor-container-registry-tarball/(.*).tgz,
     secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: output-git-pcf-pipelines-utils
   source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
     endpoint: ((final_s3_endpoint)), regexp: ((offline_run_id))/resources/git/pcf-pipelines-utils-tar(.*).tgz,
+    secret_access_key: ((final_s3_secret_access_key))}
+  type: s3
+- name: output-tile-harbor-container-registry
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), regexp: ((offline_run_id))/resources/pivnet-tile/harbor-container-registry/(.*).pivotal,
+    secret_access_key: ((final_s3_secret_access_key))}
+  type: s3
+- name: output-tile-stemcell-harbor-container-registry
+  source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
+    endpoint: ((final_s3_endpoint)), regexp: ((offline_run_id))/resources/pivnet-tile/harbor-container-registry-tarball/(.*).tgz,
     secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: output-docker-pcfnorm-rootfs-latest-docker
