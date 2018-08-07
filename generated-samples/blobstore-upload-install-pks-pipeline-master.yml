@@ -115,15 +115,20 @@ jobs:
               TILE_FILE_PATH=`find $TILE_DIRECTORY_PATH -name *.pivotal | sort | head\
               \ -1`\ntile_metadata=$(unzip -l $TILE_FILE_PATH | grep \"metadata\"\
               \ | grep \"ml$\" | awk '{print $NF}' );\nstemcell_version_reqd=$(unzip\
-              \ -p $TILE_FILE_PATH $tile_metadata | grep -A4 s\"stemcell_criteria:\"\
+              \ -p $TILE_FILE_PATH $tile_metadata | grep -A5 \"stemcell_criteria:\"\
               \ | grep \"version:\"  | grep -Ei \"[0-9]{2,}\" | awk '{print $NF}'\
-              \ | sed -e \"s/'//g;s/\\\"//g\"  );\nif [ \"$stemcell_version_reqd\"\
+              \ | sed -e \"s/'//g;s/\\\"//g\"  );\nstemcell_os_from_tile=$(unzip -p\
+              \ $TILE_FILE_PATH $tile_metadata | grep -A5 \"stemcell_criteria:\" |\
+              \ grep \"os:\" | awk '{print $NF}' | sed \"s/'//g;s/\\\"//g\" );\n\n\
+              if [[ \"$stemcell_os_from_tile\" =~ \"trusty\" ]]; then\n  product_slug=\"\
+              stemcells\"\nelif [[ \"$stemcell_os_from_tile\" =~ \"xenial\" ]]; then\n\
+              \  product_slug=\"stemcells-ubuntu-xenial\"\nfi\n\nif [ \"$stemcell_version_reqd\"\
               \ != \"\" ]; then\n  pivnet-cli login --api-token=$PIVNET_API_TOKEN\n\
-              \  pivnet-cli download-product-files -p \"stemcells\" -r $stemcell_version_reqd\
+              \  pivnet-cli download-product-files -p \"$product_slug\" -r $stemcell_version_reqd\
               \ -g \"*${IAAS}*\" --accept-eula\n  if [ $? != 0 ]; then\n   min_version=$(echo\
               \ $stemcell_version_reqd | awk -F '.' '{print $2}')\n   if [ \"$min_version\"\
               \ == \"\" ]; then\n     for min_version in $(seq 100 -1 0)\n     do\n\
-              \        pivnet-cli download-product-files -p \"stemcells\" -r $stemcell_version_reqd.$min_version\
+              \        pivnet-cli download-product-files -p \"$product_slug\" -r $stemcell_version_reqd.$min_version\
               \ -g \"*${IAAS}*\" --accept-eula && break\n     done\n   else\n    \
               \ echo \"Stemcell version $stemcell_version_reqd not found !!, giving\
               \ up\"\n     exit 1\n   fi\n  fi\n\n  SC_FILE_PATH=`find ./ -name \"\
@@ -174,15 +179,20 @@ jobs:
               TILE_FILE_PATH=`find $TILE_DIRECTORY_PATH -name *.pivotal | sort | head\
               \ -1`\ntile_metadata=$(unzip -l $TILE_FILE_PATH | grep \"metadata\"\
               \ | grep \"ml$\" | awk '{print $NF}' );\nstemcell_version_reqd=$(unzip\
-              \ -p $TILE_FILE_PATH $tile_metadata | grep -A4 s\"stemcell_criteria:\"\
+              \ -p $TILE_FILE_PATH $tile_metadata | grep -A5 \"stemcell_criteria:\"\
               \ | grep \"version:\"  | grep -Ei \"[0-9]{2,}\" | awk '{print $NF}'\
-              \ | sed -e \"s/'//g;s/\\\"//g\"  );\nif [ \"$stemcell_version_reqd\"\
+              \ | sed -e \"s/'//g;s/\\\"//g\"  );\nstemcell_os_from_tile=$(unzip -p\
+              \ $TILE_FILE_PATH $tile_metadata | grep -A5 \"stemcell_criteria:\" |\
+              \ grep \"os:\" | awk '{print $NF}' | sed \"s/'//g;s/\\\"//g\" );\n\n\
+              if [[ \"$stemcell_os_from_tile\" =~ \"trusty\" ]]; then\n  product_slug=\"\
+              stemcells\"\nelif [[ \"$stemcell_os_from_tile\" =~ \"xenial\" ]]; then\n\
+              \  product_slug=\"stemcells-ubuntu-xenial\"\nfi\n\nif [ \"$stemcell_version_reqd\"\
               \ != \"\" ]; then\n  pivnet-cli login --api-token=$PIVNET_API_TOKEN\n\
-              \  pivnet-cli download-product-files -p \"stemcells\" -r $stemcell_version_reqd\
+              \  pivnet-cli download-product-files -p \"$product_slug\" -r $stemcell_version_reqd\
               \ -g \"*${IAAS}*\" --accept-eula\n  if [ $? != 0 ]; then\n   min_version=$(echo\
               \ $stemcell_version_reqd | awk -F '.' '{print $2}')\n   if [ \"$min_version\"\
               \ == \"\" ]; then\n     for min_version in $(seq 100 -1 0)\n     do\n\
-              \        pivnet-cli download-product-files -p \"stemcells\" -r $stemcell_version_reqd.$min_version\
+              \        pivnet-cli download-product-files -p \"$product_slug\" -r $stemcell_version_reqd.$min_version\
               \ -g \"*${IAAS}*\" --accept-eula && break\n     done\n   else\n    \
               \ echo \"Stemcell version $stemcell_version_reqd not found !!, giving\
               \ up\"\n     exit 1\n   fi\n  fi\n\n  SC_FILE_PATH=`find ./ -name \"\
