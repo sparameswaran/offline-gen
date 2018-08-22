@@ -832,7 +832,7 @@ resources:
   type: s3
 - name: output-tile-stemcell-pivotal-container-service
   source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
-    endpoint: ((final_s3_endpoint)), regexp: ((offline_run_id))/resources/pivnet-tile/harbor-container-registry-tarball/(.*).tgz,
+    endpoint: ((final_s3_endpoint)), regexp: ((offline_run_id))/resources/pivnet-tile/pivotal-container-service-tarball/pivotal-container-service-(.*).tgz,
     secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: output-git-pcf-pipelines-utils
@@ -847,7 +847,7 @@ resources:
   type: s3
 - name: output-tile-stemcell-harbor-container-registry
   source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
-    endpoint: ((final_s3_endpoint)), regexp: ((offline_run_id))/resources/pivnet-tile/harbor-container-registry-tarball/(.*).tgz,
+    endpoint: ((final_s3_endpoint)), regexp: ((offline_run_id))/resources/pivnet-tile/harbor-container-registry-tarball/harbor-container-registry-(.*).tgz,
     secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: output-docker-pcfnorm-rootfs-latest-docker

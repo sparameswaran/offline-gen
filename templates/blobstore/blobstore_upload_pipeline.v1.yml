@@ -170,6 +170,7 @@ jobs:
           path: /bin/bash
       task: prepare-{{ resource['base_type'] }}-{{ resource['name'] }}-bits-to-export
     {% else %}
+
     - config:
         image_resource:
           source: {repository: ubuntu}

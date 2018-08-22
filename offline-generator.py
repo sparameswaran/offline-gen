@@ -217,6 +217,7 @@ def handle_pipelines():
 
 	try:
 		handle_resources()
+
 		save_blobuploader_pipeline(	final_input_resources,
 									final_output_resources,
 									blobstore_upload_pipeline_filename
@@ -513,20 +514,49 @@ def handle_resources():
 		resource_process_job = None
 
 		if res_type == 's3':
+			resource['base_type'] = 's3'
 			resource_process_job = handle_s3_resource(copy.copy(resource))
 		elif res_type == 'git':
+			resource['base_type'] = 'git'
 			resource_process_job = handle_git_resource(resource, src_pipeline, docker_image_analysis_map['pipeline_task_docker_references'][res_name])
 		elif 'docker' in res_type:
+			resource['base_type'] = 'docker'
 			resource_process_job = handle_docker_image(resource)
 		elif res_type == 'pivnet':
 			if resource['source']['product_slug'] in [ 'ops-manager' ]:
+				resource['base_type'] = 'pivnet-non-tile'
 				resource_process_job = handle_pivnet_non_tile_resource(resource)
 			else:
-				resource_process_job = handle_pivnet_tile_resource(resource)
+				resource['base_type'] = 'tile'
+				resource_process_job = handle_pivnet_tile_resource(copy.deepcopy(resource))
 		else:
+			resource['base_type'] = 'file'
 			resource_process_job = handle_default_resource(resource)
 
 	print '\nFinished handling of all resource jobs\n'
+
+def add_inout_resources(resource):
+	input_resource = copy.copy(resource)
+	output_resource = copy.copy(resource)
+
+	input_resource['name'] = 'input-%s-%s' % (input_resource['base_type'], resource['name'])
+	output_resource['name'] = 'output-%s-%s' % (input_resource['base_type'], resource['name'])
+
+	output_resource['source'] = copy.copy(default_bucket_config)
+	output_resource['source']['regexp'] = output_resource['regexp']
+
+	final_input_resources.append(input_resource)
+	final_output_resources.append(output_resource)
+
+	offline_resource = { 'name' : resource['name'] , 'type': 's3' , 'source': copy.copy(default_bucket_config) }
+	offline_resource['source']['regexp'] = copy.copy(resource['regexp'])
+	# For git or docker resource, change name to *-tarball
+	if resource['base_type'] in ['git', 'docker' ]:
+		offline_resource['name'] = '%s-tarball' % (resource['name'])
+
+	# Dont add the tile base type as input as we bundle the tarball for tiles in offline pipeline
+	if resource['base_type'] not in ['tile']:
+		offline_pipeline['resources'].append(offline_resource)
 
 def handle_git_only_resources():
 
@@ -548,6 +578,197 @@ def handle_git_only_resources():
 
 	print '\nFinished handling of all git only resource jobs\n'
 	return git_only_resources
+
+def handle_docker_image(resource):
+
+	resource['base_type'] = 'docker'
+	tag = resource['source'].get('tag')
+	if tag is None:
+		tag = 'latest'
+
+	resource['tag'] = tag
+	tagged_docker = '%s-docker' % tag
+
+	# If the tag + 'docker' is already in the resource name, dont add it again
+	if tagged_docker in resource['name']:
+		resource['regexp'] = '%s/%s/docker/%s.(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'])
+	else:
+		resource['regexp'] = '%s/%s/docker/%s-%s-docker.(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'], tag)
+
+	context = {}
+	resource_context = {
+		'context': context,
+		'resource': resource,
+		'files': []
+	}
+
+	docker_job_resource = template.render_as_config(
+		os.path.join('.', 'blobstore/handle_docker_image.yml' ),
+		resource_context
+	)
+
+	# Register the in/out resources
+	add_inout_resources(resource)
+	return docker_job_resource
+
+def handle_git_resource(resource, src_pipeline, task_list):
+
+	res_name = resource['name']
+	resource['base_type'] = 'git'
+	resource['regexp'] = '%s/%s/%s/%s-tar(.*).tgz' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, 'git', resource['name'])
+
+	matching_task_files = []
+	for task_file in task_list:
+		if task_file.startswith(res_name):
+			matching_task_files.append(task_file.replace(res_name + '/', ''))
+
+	#print '####### Task list for git resource: {}'.format(matching_task_files)
+
+	# Jinja template would barf against single quote. so change to double quotes
+	task_list_arr = str(matching_task_files)#.replace('\'', '"')
+	bucket_config = str(default_bucket_config)#.replace('\'', '"')
+
+	resource['task_list'] = task_list_arr
+	resource['blobstore_source'] = bucket_config
+
+	context = {}
+	resource_context = {
+		'context': context,
+		'resource': resource,
+		'task_list': task_list_arr,
+		'blobstore_source' : bucket_config,
+		'files': []
+	}
+
+	git_job_resource = template.render_as_config(
+		os.path.join('.', 'blobstore/handle_git_resource.yml' ),
+		resource_context
+	)
+
+	# Register the in/out resources
+	add_inout_resources(resource)
+	return git_job_resource
+
+def handle_pivnet_tile_resource(resource):
+
+	resource['base_type'] = 'tile'
+	resource['regexp'] = '%s/%s/pivnet-tile/%s/(.*).pivotal' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'])
+
+	context = {}
+	resource_context = {
+		'context': context,
+		'resource': resource,
+		'files': []
+	}
+
+	pivnet_tile_job_resource = template.render_as_config(
+		os.path.join('.', 'blobstore/handle_pivnet_tile.yml' ),
+		resource_context
+	)
+
+	# Register the default in/out resources
+	add_inout_resources(resource)
+
+	# Register the combined tile + stemcell also
+	combined_tile_stemcell_regexp = '%s/%s/pivnet-tile/%s-tarball/%s-(.*).tgz' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'], resource['name'])
+	output_tile_stemcell_resource = { 'type': 's3' , 'source': copy.deepcopy(default_bucket_config) }
+	output_tile_stemcell_resource['name'] = 'output-%s-%s' % ('tile-stemcell', resource['name'])
+	output_tile_stemcell_resource['source']['regexp'] = combined_tile_stemcell_regexp
+	final_output_resources.append(output_tile_stemcell_resource)
+
+	tile_tarball_regexp = '%s/%s/pivnet-tile/%s-tarball/(.*).tgz' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'])
+	offline_tile_tarball_resource = { 'name' : '%s' % resource['name'] , 'type': 's3' , 'source': copy.deepcopy(default_bucket_config) }
+
+	offline_tile_tarball_resource = { 'name' : '%s-tarball' % resource['name'] , 'type': 's3' , 'source': copy.deepcopy(default_bucket_config) }
+	offline_tile_tarball_resource['source']['regexp'] = tile_tarball_regexp
+	offline_tile_tarball_resource['name'] = '%s-%s' % (resource['name'], 'tarball')
+
+	offline_pipeline['resources'].append(offline_tile_tarball_resource)
+	return pivnet_tile_job_resource
+
+def handle_pivnet_non_tile_resource(resource):
+
+	resource['base_type'] = 'pivnet-non-tile'
+	resource['regexp'] = '%s/%s/pivnet-non-tile/%s-(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'])
+
+	context = {}
+	resource_context = {
+		'context': context,
+		'resource': resource,
+		'files': []
+	}
+
+	non_pivnet_job_resource = template.render_as_config(
+		os.path.join('.', 'blobstore/handle_non_pivnet_tile.yml' ),
+		resource_context
+	)
+
+	# Register the in/out resources
+	add_inout_resources(resource)
+
+	#print 'Job for Pivnet non-Tile resource: {}'.format(non_pivnet_job_resource)
+	return non_pivnet_job_resource
+
+def handle_s3_resource(resource):
+
+	# If the source and destination are the same s3 buckets/access keys,
+	# then just simply copy the resource into offline pipeline
+	resource['base_type'] = 's3'
+
+	if resource['source']['endpoint'] == default_bucket_config['endpoint'] \
+	  and resource['source']['bucket'] == default_bucket_config['bucket'] \
+	  and resource['source']['access_key_id'] == \
+	  default_bucket_config['access_key_id'] \
+	  and resource['source']['secret_access_key'] == \
+	  default_bucket_config['secret_access_key']:
+		# Just add to the offline resource list
+		offline_pipeline['resources'].append(resource)
+		return None
+
+	# Requires modification
+	resource['base_type'] = 's3'
+	resource['regexp'] = '%s/%s/s3/%s-(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'])
+
+	context = {}
+	resource_context = {
+		'context': context,
+		'resource': resource,
+		'files': []
+	}
+
+	s3_job_resource = template.render_as_config(
+		os.path.join('.', 'blobstore/handle_file_resource.yml' ),
+		resource_context
+	)
+
+	# Register the in/out resources
+	add_inout_resources(resource)
+
+	#print 'Job for S3 resource: {}'.format(s3_job_resource)
+	return s3_job_resource
+
+def handle_default_resource(resource):
+
+	resource['base_type'] = 'file'
+	resource['regexp'] = '%s/%s/file/%s-*-(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'])
+
+	context = {}
+	resource_context = {
+		'context': context,
+		'resource': resource,
+		'files': []
+	}
+
+	file_job_resource = template.render_as_config(
+		os.path.join('.', 'blobstore/handle_file_resource.yml' ),
+		resource_context
+	)
+
+	# Register the in/out resources
+	add_inout_resources(resource)
+
+	#print 'Job for File resource: {}'.format(file_job_resource)
+	return file_job_resource
 
 def find_match_in_list(list, name):
 	for entry in list:
@@ -571,8 +792,6 @@ def create_resource_map(resource_list):
 
 def handle_offline_tasks():
 
-	alias_resource_map = {}
-
 	job_tasks_references = docker_image_analysis_map['pipeline_task_docker_references']['target-pipeline']['job_tasks_references']
 	for offline_job in offline_pipeline['jobs']:
 
@@ -580,6 +799,7 @@ def handle_offline_tasks():
 		target_task_name = None
 		target_task_file = None
 		ref_map_target_job_name = None
+		alias_resource_map = {}
 
 		for job_tasks_reference in job_tasks_references:
 			ref_map_target_job_name = job_tasks_reference.keys()[0]
@@ -604,6 +824,33 @@ def handle_offline_tasks():
 
 					original_aggregate = copy.copy(plan_entry)
 					handle_aggregated_plan_entry(plan, plan_key, original_aggregate, alias_resource_map, job_tasks_reference)
+
+					#print 'Plan after get aggregated resource details: {}'.format(plan)
+					# We need to strip off the *.pivotal tile from input resources from the aggregated gets of the plan
+					  # - aggregate:
+					  #   - {get: nsx-t-ci-pipeline-tarball}
+					  #   - {get: czero-cflinuxfs2-latest-docker-tarball}
+					  #   - get: pivotal-container-service-tarball
+					  #     params:
+					  #       globs: [pivotal-container-service*.pivotal] --> remove this
+					  #   - get: pcf-ops-manager
+					  #     params:
+					  #       globs: []
+					  #     passed: [deploy-director]
+					  #     trigger: true
+
+
+					for entry in plan['aggregate']:
+						if entry.get('params') and entry['params'].get('globs'):
+							#print 'Glob entry within plan: {}'.format(entry['params']['globs'])
+							copy_of_glob_entries = copy.copy(entry['params']['globs'])
+							for glob_entry in copy_of_glob_entries:
+								if glob_entry.endswith('.pivotal'):
+									entry['params']['globs'].remove(glob_entry)
+							# if not entry['params']['globs']:
+							# 		entry['params'].pop('globs', None)
+							# if not entry['params']:
+							# 		entry.pop('params', None)
 
 					for new_entry in plan[plan_key]:
 						for entry_key, entry_value in new_entry.items():
@@ -672,6 +919,8 @@ def handle_aggregated_plan_entry(plan, aggregate_key, original_aggregate, alias_
 						original_get_resource_name = entry.get('resource')
 						entry.pop('resource', None)
 						alias_resource_map[aliased_resource_name] = original_get_resource_name
+						#print 'Setting entry {} for alias_resource_map to {} and original resource {}'.format(aliased_resource_name,
+						#   original_get_resource_name, original_get_resource_name)
 
 				new_nested_entries = handle_get_resource_details(original_get_resource_name, job_tasks_reference)
 				#print 'Got nested plan entries as {} '.format(new_nested_entries)
@@ -699,6 +948,7 @@ def handle_aggregated_plan_entry(plan, aggregate_key, original_aggregate, alias_
 
 	# Save this as the new plan entry against the aggregate key
 	plan[aggregate_key] = new_aggregate_list
+	#print 'After saving updated plan, got offline resources as: \n {}'.format(offline_pipeline['resources'])
 
 def handle_get_resource_details(get_resource_name, job_tasks_reference):
 
@@ -771,6 +1021,7 @@ def handle_get_resource_details(get_resource_name, job_tasks_reference):
 
 	elif resource_type in [ 'pivnet' ]:
 		# Special handling for Pivnet Tiles
+		# Dont add the tile directly as resource
 		new_nested_plan_entries.append( { 'get' :  get_resource_name } )
 
 		# # Check for stemcells associated with the tile
@@ -784,6 +1035,9 @@ def handle_get_resource_details(get_resource_name, job_tasks_reference):
 		matching_tile_tarball_resource = offline_resource_map.get(get_resource_name + '-tarball')
 		if matching_tile_tarball_resource is not None:
 			new_nested_plan_entries.append( { 'get' :  matching_tile_tarball_resource['name'] } )
+			# Remove the tile entry from input get resource, as we are going wtih the tarball of the tile
+			new_nested_plan_entries.remove({ 'get' :  get_resource_name })
+
 
 	return new_nested_plan_entries
 
@@ -1030,7 +1284,7 @@ def create_full_run_command(tarball_dependent_resources_map, file_resources_to_m
 
 	for resource in tarball_dependent_resources_map.keys():
 		if ignore_resource is None or (ignore_resource['name'] not in resource):
-			run_command_str_list.append('cd %s; tar -zxf ../%s-tarball/*.tgz; cd ..;'
+			run_command_str_list.append('cd %s; tar -zxf ../%s-tarball/*.tgz; find .  -size 0 -print | xargs rm; cd ..;'
 					% (resource, tarball_dependent_resources_map[resource]))
 
 	for resource in file_resources_to_move_map.keys():
@@ -1070,216 +1324,7 @@ def normalize_into_named_list(given_list):
 
 	return cleanedup_list
 
-def add_inout_resources(resource):
-	input_resource = copy.copy(resource)
-	output_resource = copy.copy(resource)
 
-	input_resource['name'] = 'input-%s-%s' % (resource['base_type'], resource['name'])
-	output_resource['name'] = 'output-%s-%s' % (resource['base_type'], resource['name'])
-
-	output_resource['source'] = copy.copy(default_bucket_config)
-	output_resource['source']['regexp'] = output_resource['regexp']
-
-	final_input_resources.append(input_resource)
-	final_output_resources.append(output_resource)
-
-	offline_resource = { 'name' : resource['name'] , 'type': 's3' , 'source': copy.copy(default_bucket_config) }
-	offline_resource['source']['regexp'] = copy.copy(resource['regexp'])
-	# For git or docker resource, change name to *-tarball
-	if resource['base_type'] in ['git', 'docker' ]:
-		offline_resource['name'] = '%s-tarball' % (resource['name'])
-
-	offline_pipeline['resources'].append(offline_resource)
-
-def handle_docker_image(resource):
-
-	resource['base_type'] = 'docker'
-	tag = resource['source'].get('tag')
-	if tag is None:
-		tag = 'latest'
-
-	resource['tag'] = tag
-	tagged_docker = '%s-docker' % tag
-
-	# If the tag + 'docker' is already in the resource name, dont add it again
-	if tagged_docker in resource['name']:
-		resource['regexp'] = '%s/%s/docker/%s.(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'])
-	else:
-		resource['regexp'] = '%s/%s/docker/%s-%s-docker.(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'], tag)
-
-	context = {}
-	resource_context = {
-		'context': context,
-		'resource': resource,
-		'files': []
-	}
-
-	docker_job_resource = template.render_as_config(
-		os.path.join('.', 'blobstore/handle_docker_image.yml' ),
-		resource_context
-	)
-
-	# Register the in/out resources
-	add_inout_resources(resource)
-	return docker_job_resource
-
-def handle_git_resource(resource, src_pipeline, task_list):
-
-	res_name = resource['name']
-	resource['base_type'] = 'git'
-	resource['regexp'] = '%s/%s/%s/%s-tar(.*).tgz' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, 'git', resource['name'])
-
-	matching_task_files = []
-	for task_file in task_list:
-		if task_file.startswith(res_name):
-			matching_task_files.append(task_file.replace(res_name + '/', ''))
-
-	#print '####### Task list for git resource: {}'.format(matching_task_files)
-
-	# Jinja template would barf against single quote. so change to double quotes
-	task_list_arr = str(matching_task_files)#.replace('\'', '"')
-	bucket_config = str(default_bucket_config)#.replace('\'', '"')
-
-	resource['task_list'] = task_list_arr
-	resource['blobstore_source'] = bucket_config
-
-	context = {}
-	resource_context = {
-		'context': context,
-		'resource': resource,
-		'task_list': task_list_arr,
-		'blobstore_source' : bucket_config,
-		'files': []
-	}
-
-	git_job_resource = template.render_as_config(
-		os.path.join('.', 'blobstore/handle_git_resource.yml' ),
-		resource_context
-	)
-
-	# Register the in/out resources
-	add_inout_resources(resource)
-	return git_job_resource
-
-def handle_pivnet_tile_resource(resource):
-
-	resource['base_type'] = 'tile'
-	resource['regexp'] = '%s/%s/pivnet-tile/%s/(.*).pivotal' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'])
-
-	context = {}
-	resource_context = {
-		'context': context,
-		'resource': resource,
-		'files': []
-	}
-
-	pivnet_tile_job_resource = template.render_as_config(
-		os.path.join('.', 'blobstore/handle_pivnet_tile.yml' ),
-		resource_context
-	)
-
-	# Register the default in/out resources
-	add_inout_resources(resource)
-
-	# Register the combined tile + stemcell also
-	combined_tile_stemcell_regexp = '%s/%s/pivnet-tile/%s-tarball/%s-(.*).tgz' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'], resource['name'])
-	output_tile_stemcell_resource = { 'type': 's3' , 'source': default_bucket_config }
-	output_tile_stemcell_resource['name'] = 'output-%s-%s' % ('tile-stemcell', resource['name'])
-	output_tile_stemcell_resource['source']['regexp'] = combined_tile_stemcell_regexp
-	final_output_resources.append(output_tile_stemcell_resource)
-
-	tile_tarball_regexp = '%s/%s/pivnet-tile/%s-tarball/(.*).tgz' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'])
-	offline_tile_tarball_resource = { 'name' : '%s-tarball' % resource['name'] , 'type': 's3' , 'source': default_bucket_config }
-	offline_tile_tarball_resource['source']['regexp'] = tile_tarball_regexp
-	offline_tile_tarball_resource['name'] = '%s-%s' % (resource['name'], 'tarball')
-
-	offline_pipeline['resources'].append(offline_tile_tarball_resource)
-
-	return pivnet_tile_job_resource
-
-def handle_pivnet_non_tile_resource(resource):
-
-	resource['base_type'] = 'pivnet-non-tile'
-	resource['regexp'] = '%s/%s/pivnet-non-tile/%s-(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'])
-
-	context = {}
-	resource_context = {
-		'context': context,
-		'resource': resource,
-		'files': []
-	}
-
-	non_pivnet_job_resource = template.render_as_config(
-		os.path.join('.', 'blobstore/handle_non_pivnet_tile.yml' ),
-		resource_context
-	)
-
-	# Register the in/out resources
-	add_inout_resources(resource)
-
-	#print 'Job for Pivnet non-Tile resource: {}'.format(non_pivnet_job_resource)
-	return non_pivnet_job_resource
-
-def handle_s3_resource(resource):
-
-	# If the source and destination are the same s3 buckets/access keys,
-	# then just simply copy the resource into offline pipeline
-	resource['base_type'] = 's3'
-
-	if resource['source']['endpoint'] == default_bucket_config['endpoint'] \
-	  and resource['source']['bucket'] == default_bucket_config['bucket'] \
-	  and resource['source']['access_key_id'] == \
-	  default_bucket_config['access_key_id'] \
-	  and resource['source']['secret_access_key'] == \
-	  default_bucket_config['secret_access_key']:
-		# Just add to the offline resource list
-		offline_pipeline['resources'].append(resource)
-		return None
-
-	# Requires modification
-	resource['base_type'] = 's3'
-	resource['regexp'] = '%s/%s/s3/%s-(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'])
-
-	context = {}
-	resource_context = {
-		'context': context,
-		'resource': resource,
-		'files': []
-	}
-
-	s3_job_resource = template.render_as_config(
-		os.path.join('.', 'blobstore/handle_file_resource.yml' ),
-		resource_context
-	)
-
-	# Register the in/out resources
-	add_inout_resources(resource)
-
-	#print 'Job for S3 resource: {}'.format(s3_job_resource)
-	return s3_job_resource
-
-def handle_default_resource(resource):
-
-	resource['base_type'] = 'file'
-	resource['regexp'] = '%s/%s/file/%s-*-(.*)' % ( RUN_NAME, DEFAULT_RESOURCES_PATH, resource['name'])
-
-	context = {}
-	resource_context = {
-		'context': context,
-		'resource': resource,
-		'files': []
-	}
-
-	file_job_resource = template.render_as_config(
-		os.path.join('.', 'blobstore/handle_file_resource.yml' ),
-		resource_context
-	)
-
-	# Register the in/out resources
-	add_inout_resources(resource)
-
-	#print 'Job for File resource: {}'.format(file_job_resource)
-	return file_job_resource
 
 def read_config(input_file, abort=True):
 	try:
