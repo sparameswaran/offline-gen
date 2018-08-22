@@ -1284,7 +1284,7 @@ def create_full_run_command(tarball_dependent_resources_map, file_resources_to_m
 
 	for resource in tarball_dependent_resources_map.keys():
 		if ignore_resource is None or (ignore_resource['name'] not in resource):
-			run_command_str_list.append('cd %s; tar -zxf ../%s-tarball/*.tgz; find .  -size 0 -print | xargs rm; cd ..;'
+			run_command_str_list.append('cd %s; tar -zxf ../%s-tarball/*.tgz; find .  -size 0 -exec rm {} \; ; cd ..;'
 					% (resource, tarball_dependent_resources_map[resource]))
 
 	for resource in file_resources_to_move_map.keys():
