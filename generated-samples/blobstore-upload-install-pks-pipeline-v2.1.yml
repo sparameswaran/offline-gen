@@ -4,7 +4,7 @@ groups:
 - jobs: [kickoff-pcf-pipelines-upload-to-blobstore, kickoff-nsx-t-ci-pipeline-upload-to-blobstore,
     kickoff-pcf-ops-manager-upload-to-blobstore, kickoff-pivotal-container-service-upload-to-blobstore,
     kickoff-pcf-pipelines-utils-upload-to-blobstore, kickoff-harbor-container-registry-upload-to-blobstore,
-    kickoff-pcfnorm-rootfs-latest-docker-upload-to-blobstore, kickoff-czero-cflinuxfs2-latest-docker-upload-to-blobstore,
+    kickoff-pcfnorm-rootfs-1.0.17-docker-upload-to-blobstore, kickoff-czero-cflinuxfs2-latest-docker-upload-to-blobstore,
     kickoff-czero-rootfs-latest-docker-upload-to-blobstore, kickoff-pivotalservices-pks-kubectl-latest-docker-upload-to-blobstore]
   name: individual-kickoff
 jobs:
@@ -23,7 +23,7 @@ jobs:
     - get: input-tile-harbor-container-registry
       params:
         globs: ['*.pivotal']
-    - get: input-docker-pcfnorm-rootfs-latest-docker
+    - get: input-docker-pcfnorm-rootfs-1.0.17-docker
       params: {rootfs: true}
     - get: input-docker-czero-cflinuxfs2-latest-docker
       params: {rootfs: true}
@@ -210,39 +210,39 @@ jobs:
           source: {repository: ubuntu}
           type: docker-image
         inputs:
-        - {name: input-docker-pcfnorm-rootfs-latest-docker}
+        - {name: input-docker-pcfnorm-rootfs-1.0.17-docker}
         outputs:
-        - {name: output-docker-pcfnorm-rootfs-latest-docker}
+        - {name: output-docker-pcfnorm-rootfs-1.0.17-docker}
         platform: linux
         run:
-          args: [-ec, 'echo "Exporting pcfnorm-rootfs-latest-docker docker image";
+          args: [-ec, 'echo "Exporting pcfnorm-rootfs-1.0.17-docker docker image";
 
               mkdir export-directory;
 
               cd export-directory;
 
-              cp ../input-docker-pcfnorm-rootfs-latest-docker/metadata.json .;
+              cp ../input-docker-pcfnorm-rootfs-1.0.17-docker/metadata.json .;
 
               mkdir rootfs && cd rootfs;
 
-              cp ../../input-docker-pcfnorm-rootfs-latest-docker/rootfs.tar ..;
+              cp ../../input-docker-pcfnorm-rootfs-1.0.17-docker/rootfs.tar ..;
 
               tar -xf ../rootfs.tar --exclude="dev/*";
 
-              echo "Packaging pcfnorm-rootfs-latest-docker docker image";
+              echo "Packaging pcfnorm-rootfs-1.0.17-docker docker image";
 
               cd ..;
 
               rm rootfs.tar;
 
-              tar -czf   "../output-docker-pcfnorm-rootfs-latest-docker/pcfnorm-rootfs-latest-docker-latest-docker.tgz"
+              tar -czf   "../output-docker-pcfnorm-rootfs-1.0.17-docker/pcfnorm-rootfs-1.0.17-docker-latest-docker.tgz"
               .;
 
-              ls -l ../output-docker-pcfnorm-rootfs-latest-docker/;
+              ls -l ../output-docker-pcfnorm-rootfs-1.0.17-docker/;
 
               ']
           path: /bin/bash
-      task: prepare-pcfnorm-rootfs-latest-docker-docker-image-to-export
+      task: prepare-pcfnorm-rootfs-1.0.17-docker-docker-image-to-export
     - config:
         image_resource:
           source: {repository: ubuntu}
@@ -377,8 +377,8 @@ jobs:
       put: output-tile-harbor-container-registry
     - params: {file: output-tile-stemcell-harbor-container-registry/harbor-container-registry-*.tgz}
       put: output-tile-stemcell-harbor-container-registry
-    - params: {file: output-docker-pcfnorm-rootfs-latest-docker/pcfnorm-rootfs-latest-docker*.tgz}
-      put: output-docker-pcfnorm-rootfs-latest-docker
+    - params: {file: output-docker-pcfnorm-rootfs-1.0.17-docker/pcfnorm-rootfs-1.0.17-docker*.tgz}
+      put: output-docker-pcfnorm-rootfs-1.0.17-docker
     - params: {file: output-docker-czero-cflinuxfs2-latest-docker/czero-cflinuxfs2-latest-docker*.tgz}
       put: output-docker-czero-cflinuxfs2-latest-docker
     - params: {file: output-docker-czero-rootfs-latest-docker/czero-rootfs-latest-docker*.tgz}
@@ -593,50 +593,50 @@ jobs:
     put: output-tile-harbor-container-registry
   - params: {file: output-tile-stemcell-harbor-container-registry/harbor-container-registry-*.tgz}
     put: output-tile-stemcell-harbor-container-registry
-- name: kickoff-pcfnorm-rootfs-latest-docker-upload-to-blobstore
+- name: kickoff-pcfnorm-rootfs-1.0.17-docker-upload-to-blobstore
   plan:
-  - get: input-docker-pcfnorm-rootfs-latest-docker
+  - get: input-docker-pcfnorm-rootfs-1.0.17-docker
     params: {rootfs: true}
   - config:
       image_resource:
         source: {repository: ubuntu}
         type: docker-image
       inputs:
-      - {name: input-docker-pcfnorm-rootfs-latest-docker}
+      - {name: input-docker-pcfnorm-rootfs-1.0.17-docker}
       outputs:
-      - {name: output-docker-pcfnorm-rootfs-latest-docker}
+      - {name: output-docker-pcfnorm-rootfs-1.0.17-docker}
       platform: linux
       run:
-        args: [-ec, 'echo "Exporting pcfnorm-rootfs-latest-docker docker image";
+        args: [-ec, 'echo "Exporting pcfnorm-rootfs-1.0.17-docker docker image";
 
             mkdir export-directory;
 
             cd export-directory;
 
-            cp ../input-docker-pcfnorm-rootfs-latest-docker/metadata.json .;
+            cp ../input-docker-pcfnorm-rootfs-1.0.17-docker/metadata.json .;
 
             mkdir rootfs && cd rootfs;
 
-            cp ../../input-docker-pcfnorm-rootfs-latest-docker/rootfs.tar ..;
+            cp ../../input-docker-pcfnorm-rootfs-1.0.17-docker/rootfs.tar ..;
 
             tar -xf ../rootfs.tar --exclude="dev/*";
 
-            echo "Packaging pcfnorm-rootfs-latest-docker docker image";
+            echo "Packaging pcfnorm-rootfs-1.0.17-docker docker image";
 
             cd ..;
 
             rm rootfs.tar;
 
-            tar -czf   "../output-docker-pcfnorm-rootfs-latest-docker/pcfnorm-rootfs-latest-docker-latest-docker.tgz"
+            tar -czf   "../output-docker-pcfnorm-rootfs-1.0.17-docker/pcfnorm-rootfs-1.0.17-docker-latest-docker.tgz"
             .;
 
-            ls -l ../output-docker-pcfnorm-rootfs-latest-docker/;
+            ls -l ../output-docker-pcfnorm-rootfs-1.0.17-docker/;
 
             ']
         path: /bin/bash
-    task: prepare-pcfnorm-rootfs-latest-docker-docker-image-to-export
-  - params: {file: output-docker-pcfnorm-rootfs-latest-docker/pcfnorm-rootfs-latest-docker*}
-    put: output-docker-pcfnorm-rootfs-latest-docker
+    task: prepare-pcfnorm-rootfs-1.0.17-docker-docker-image-to-export
+  - params: {file: output-docker-pcfnorm-rootfs-1.0.17-docker/pcfnorm-rootfs-1.0.17-docker*}
+    put: output-docker-pcfnorm-rootfs-1.0.17-docker
 - name: kickoff-czero-cflinuxfs2-latest-docker-upload-to-blobstore
   plan:
   - get: input-docker-czero-cflinuxfs2-latest-docker
@@ -798,7 +798,7 @@ resources:
   source: {api_token: ((pivnet_token)), product_slug: harbor-container-registry, product_version: ((harbor_product_version)),
     sort_by: semver}
   type: pivnet
-- name: input-docker-pcfnorm-rootfs-latest-docker
+- name: input-docker-pcfnorm-rootfs-1.0.17-docker
   source: {repository: pcfnorm/rootfs, tag: latest}
   type: docker-image
 - name: input-docker-czero-cflinuxfs2-latest-docker
@@ -850,9 +850,9 @@ resources:
     endpoint: ((final_s3_endpoint)), regexp: ((offline_run_id))/resources/pivnet-tile/harbor-container-registry-tarball/harbor-container-registry-(.*).tgz,
     secret_access_key: ((final_s3_secret_access_key))}
   type: s3
-- name: output-docker-pcfnorm-rootfs-latest-docker
+- name: output-docker-pcfnorm-rootfs-1.0.17-docker
   source: {access_key_id: ((final_s3_access_key_id)), bucket: ((final_s3_bucket)),
-    endpoint: ((final_s3_endpoint)), regexp: ((offline_run_id))/resources/docker/pcfnorm-rootfs-latest-docker.(.*),
+    endpoint: ((final_s3_endpoint)), regexp: ((offline_run_id))/resources/docker/pcfnorm-rootfs-1.0.17-docker.(.*),
     secret_access_key: ((final_s3_secret_access_key))}
   type: s3
 - name: output-docker-czero-cflinuxfs2-latest-docker
